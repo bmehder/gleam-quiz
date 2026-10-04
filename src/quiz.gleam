@@ -31,7 +31,7 @@ pub type Msg {
 }
 
 pub fn initial_model() -> Model {
-  case questions.all() {
+  case questions.shuffled() {
     [first, ..rest] ->
       Answering(current: first, remaining: rest, score: 0, answered_count: 0)
 

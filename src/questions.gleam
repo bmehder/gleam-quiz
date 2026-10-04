@@ -1,3 +1,5 @@
+import gleam/list
+
 pub type Answer {
   Answer(text: String, is_correct: Bool)
 }
@@ -6,6 +8,10 @@ pub type Question {
   Question(prompt: String, answers: List(Answer), explanation: String)
 }
 
+/// Return the canonical question bank.
+///
+/// Keep the correct answer first here to make questions easy to author and review.
+/// The application uses shuffled to randomise both levels for each quiz run.
 pub fn all() -> List(Question) {
   [
     Question(
@@ -576,4 +582,12 @@ pub fn all() -> List(Question) {
       explanation: "Pure Gleam code commonly works on either target. Target-specific externals and runtime capabilities can still limit portability.",
     ),
   ]
+}
+
+pub fn shuffled() -> List(Question) {
+  all()
+  |> list.map(fn(question) {
+    Question(..question, answers: list.shuffle(question.answers))
+  })
+  |> list.shuffle
 }
