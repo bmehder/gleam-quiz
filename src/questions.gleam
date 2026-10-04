@@ -581,6 +581,727 @@ pub fn all() -> List(Question) {
       ],
       explanation: "Pure Gleam code commonly works on either target. Target-specific externals and runtime capabilities can still limit portability.",
     ),
+    Question(
+      prompt: "What happens when a let binding reuses an existing variable name?",
+      answers: [
+        Answer(text: "A new binding shadows the earlier one", is_correct: True),
+        Answer(text: "The earlier value is mutated", is_correct: False),
+        Answer(text: "The compiler always rejects it", is_correct: False),
+        Answer(text: "Both values are merged", is_correct: False),
+      ],
+      explanation: "Gleam values are immutable. Reusing a name creates a new binding that shadows the old one from that point onward.",
+    ),
+    Question(
+      prompt: "Which naming style does Gleam require for functions and variables?",
+      answers: [
+        Answer(text: "snake_case", is_correct: True),
+        Answer(text: "camelCase", is_correct: False),
+        Answer(text: "PascalCase", is_correct: False),
+        Answer(text: "kebab-case", is_correct: False),
+      ],
+      explanation: "Functions, variables, and module names use snake_case. Types and constructors use PascalCase.",
+    ),
+    Question(
+      prompt: "What is the type of Nil?",
+      answers: [
+        Answer(text: "Nil", is_correct: True),
+        Answer(text: "Option(a)", is_correct: False),
+        Answer(text: "Bool", is_correct: False),
+        Answer(text: "List(a)", is_correct: False),
+      ],
+      explanation: "Nil is both the single value and the name of its type. It is commonly used when no meaningful value needs to be carried.",
+    ),
+    Question(
+      prompt: "What does a type alias create?",
+      answers: [
+        Answer(text: "Another name for an existing type", is_correct: True),
+        Answer(text: "A new incompatible runtime type", is_correct: False),
+        Answer(text: "A hidden custom-type constructor", is_correct: False),
+        Answer(text: "A mutable reference", is_correct: False),
+      ],
+      explanation: "An alias improves readability but does not create a distinct type. Values of the alias and the original type are interchangeable.",
+    ),
+    Question(
+      prompt: "Where must a Gleam module declaration be written?",
+      answers: [
+        Answer(
+          text: "Nowhere; the file path determines the module name",
+          is_correct: True,
+        ),
+        Answer(
+          text: "On the first line of every source file",
+          is_correct: False,
+        ),
+        Answer(text: "In gleam.toml for each file", is_correct: False),
+        Answer(text: "Inside the main function", is_correct: False),
+      ],
+      explanation: "A source file's path under src or test determines its module name, so Gleam does not use an in-file module declaration.",
+    ),
+    Question(
+      prompt: "What does import gleam/list.{map} make available?",
+      answers: [
+        Answer(
+          text: "The map function without a module prefix",
+          is_correct: True,
+        ),
+        Answer(text: "Every function in gleam/list", is_correct: False),
+        Answer(text: "Only the List type", is_correct: False),
+        Answer(text: "A new function named list_map", is_correct: False),
+      ],
+      explanation: "Items listed in braces are imported unqualified, allowing map(...) instead of list.map(...).",
+    ),
+    Question(
+      prompt: "Why can two different modules define functions with the same name?",
+      answers: [
+        Answer(
+          text: "Module qualification keeps their names separate",
+          is_correct: True,
+        ),
+        Answer(text: "Only one function is compiled", is_correct: False),
+        Answer(text: "Gleam renames functions randomly", is_correct: False),
+        Answer(text: "Function names are ignored at runtime", is_correct: False),
+      ],
+      explanation: "Calls such as list.map and result.map identify both the module and function, avoiding a global namespace collision.",
+    ),
+    Question(
+      prompt: "What is a module constant allowed to depend on?",
+      answers: [
+        Answer(text: "Other constant expressions", is_correct: True),
+        Answer(text: "User input read at startup", is_correct: False),
+        Answer(text: "Any function call", is_correct: False),
+        Answer(text: "A mutable global variable", is_correct: False),
+      ],
+      explanation: "Module constants are evaluated from constant expressions at compile time rather than by executing arbitrary functions.",
+    ),
+    Question(
+      prompt: "What does todo do when evaluated?",
+      answers: [
+        Answer(text: "Panics to mark unfinished code", is_correct: True),
+        Answer(text: "Returns Nil", is_correct: False),
+        Answer(
+          text: "Creates a compiler error in every case",
+          is_correct: False,
+        ),
+        Answer(text: "Skips the current function", is_correct: False),
+      ],
+      explanation: "todo is useful while developing because it can inhabit any expected type, but evaluating it causes a panic.",
+    ),
+    Question(
+      prompt: "What is the intended use of panic?",
+      answers: [
+        Answer(
+          text: "Stopping on an unrecoverable programmer error",
+          is_correct: True,
+        ),
+        Answer(
+          text: "Representing routine validation failures",
+          is_correct: False,
+        ),
+        Answer(text: "Returning an empty Option", is_correct: False),
+        Answer(text: "Retrying a failed network request", is_correct: False),
+      ],
+      explanation: "Expected failures belong in Result or Option. panic is for states from which the program cannot sensibly recover.",
+    ),
+    Question(
+      prompt: "What does a let pattern require?",
+      answers: [
+        Answer(
+          text: "A pattern that always matches the value's type",
+          is_correct: True,
+        ),
+        Answer(text: "A pattern with a wildcard", is_correct: False),
+        Answer(text: "A Result value", is_correct: False),
+        Answer(text: "A guard expression", is_correct: False),
+      ],
+      explanation: "Plain let bindings must be irrefutable. Use case for alternatives or let assert when failure truly indicates a bug.",
+    ),
+    Question(
+      prompt: "What does the wildcard pattern _ do?",
+      answers: [
+        Answer(text: "Matches a value without binding it", is_correct: True),
+        Answer(text: "Matches only Nil", is_correct: False),
+        Answer(text: "Copies the previous binding", is_correct: False),
+        Answer(text: "Makes a pattern optional", is_correct: False),
+      ],
+      explanation: "The wildcard accepts any value when that value is not needed in the clause body.",
+    ),
+    Question(
+      prompt: "Why might a variable name begin with an underscore?",
+      answers: [
+        Answer(text: "To show it may intentionally be unused", is_correct: True),
+        Answer(text: "To make it globally accessible", is_correct: False),
+        Answer(text: "To make its value optional", is_correct: False),
+        Answer(text: "To disable type checking", is_correct: False),
+      ],
+      explanation: "A leading underscore communicates intentional non-use and avoids the compiler warning produced for an ordinary unused binding.",
+    ),
+    Question(
+      prompt: "What does True && False evaluate to?",
+      answers: [
+        Answer(text: "False", is_correct: True),
+        Answer(text: "True", is_correct: False),
+        Answer(text: "Nil", is_correct: False),
+        Answer(text: "Error(False)", is_correct: False),
+      ],
+      explanation: "The && operator is Boolean conjunction, so both operands must be True for the result to be True.",
+    ),
+    Question(
+      prompt: "What is special about && and || evaluation?",
+      answers: [
+        Answer(
+          text: "They short-circuit when the result is already known",
+          is_correct: True,
+        ),
+        Answer(text: "They accept values of any type", is_correct: False),
+        Answer(text: "They always evaluate right-to-left", is_correct: False),
+        Answer(text: "They return Option(Bool)", is_correct: False),
+      ],
+      explanation: "The right operand is evaluated only when needed: && stops after False and || stops after True.",
+    ),
+    Question(
+      prompt: "Which operator gives the remainder of integer division?",
+      answers: [
+        Answer(text: "%", is_correct: True),
+        Answer(text: "%%", is_correct: False),
+        Answer(text: "mod", is_correct: False),
+        Answer(text: "/.", is_correct: False),
+      ],
+      explanation: "The % operator computes the integer remainder, while / performs integer division.",
+    ),
+    Question(
+      prompt: "Can Gleam implicitly add an Int to a Float?",
+      answers: [
+        Answer(
+          text: "No, numeric types are not implicitly converted",
+          is_correct: True,
+        ),
+        Answer(text: "Yes, the Int becomes a Float", is_correct: False),
+        Answer(text: "Yes, the Float becomes an Int", is_correct: False),
+        Answer(text: "Only on the JavaScript target", is_correct: False),
+      ],
+      explanation: "Int and Float are distinct types with distinct operators. Conversion must be explicit.",
+    ),
+    Question(
+      prompt: "What does int.parse return for text that is not an integer?",
+      answers: [
+        Answer(text: "An Error value", is_correct: True),
+        Answer(text: "0", is_correct: False),
+        Answer(text: "None", is_correct: False),
+        Answer(text: "An empty string", is_correct: False),
+      ],
+      explanation: "Parsing can fail, so int.parse reports success or failure with Result rather than inventing a fallback number.",
+    ),
+    Question(
+      prompt: "How are Gleam strings encoded?",
+      answers: [
+        Answer(text: "As UTF-8 text", is_correct: True),
+        Answer(text: "As ASCII only", is_correct: False),
+        Answer(text: "As UTF-32 arrays", is_correct: False),
+        Answer(text: "As lists of Int values", is_correct: False),
+      ],
+      explanation: "Gleam strings are UTF-8, so byte size and the number of human-readable characters are not always the same.",
+    ),
+    Question(
+      prompt: "Why is string.length not always the number of visible symbols a person sees?",
+      answers: [
+        Answer(
+          text: "Unicode graphemes can contain multiple codepoints",
+          is_correct: True,
+        ),
+        Answer(
+          text: "Strings include a hidden null terminator",
+          is_correct: False,
+        ),
+        Answer(text: "The function counts words", is_correct: False),
+        Answer(text: "Length is random on JavaScript", is_correct: False),
+      ],
+      explanation: "Unicode text can combine several codepoints into one displayed grapheme, making text measurement more nuanced than ASCII counting.",
+    ),
+    Question(
+      prompt: "What does a bit array represent?",
+      answers: [
+        Answer(
+          text: "A sequence of bits with typed segment patterns",
+          is_correct: True,
+        ),
+        Answer(text: "A mutable list of Booleans", is_correct: False),
+        Answer(text: "A set containing only 0 and 1", is_correct: False),
+        Answer(text: "A compressed String", is_correct: False),
+      ],
+      explanation: "Bit arrays are designed for binary data and protocols. Their syntax can construct and pattern match segments with sizes and encodings.",
+    ),
+    Question(
+      prompt: "What can a bit-array pattern help parse?",
+      answers: [
+        Answer(
+          text: "Structured binary formats and network protocols",
+          is_correct: True,
+        ),
+        Answer(text: "Only Gleam source files", is_correct: False),
+        Answer(text: "CSS class names", is_correct: False),
+        Answer(text: "Database rows without decoding", is_correct: False),
+      ],
+      explanation: "Segment options let patterns describe binary layouts, making bit arrays useful for decoding headers, packets, and file formats.",
+    ),
+    Question(
+      prompt: "Why is prepending usually preferable to repeatedly appending to a List?",
+      answers: [
+        Answer(
+          text: "Prepending is constant time for linked lists",
+          is_correct: True,
+        ),
+        Answer(text: "Appending mutates every element", is_correct: False),
+        Answer(text: "Gleam forbids appending", is_correct: False),
+        Answer(
+          text: "Prepending automatically sorts the list",
+          is_correct: False,
+        ),
+      ],
+      explanation: "A new head can point directly to the existing list. Reaching the end to append requires walking the list.",
+    ),
+    Question(
+      prompt: "What does list.reverse change?",
+      answers: [
+        Answer(
+          text: "It returns a new list in the opposite order",
+          is_correct: True,
+        ),
+        Answer(text: "It mutates the original list", is_correct: False),
+        Answer(text: "It reverses each element's bytes", is_correct: False),
+        Answer(text: "It sorts from largest to smallest", is_correct: False),
+      ],
+      explanation: "Like other Gleam collection operations, list.reverse produces a new immutable value.",
+    ),
+    Question(
+      prompt: "What does list.flatten do?",
+      answers: [
+        Answer(text: "Combines a list of lists into one list", is_correct: True),
+        Answer(text: "Removes every duplicate", is_correct: False),
+        Answer(text: "Sorts nested lists", is_correct: False),
+        Answer(text: "Converts a list into a tuple", is_correct: False),
+      ],
+      explanation: "Flatten removes one level of list nesting by concatenating the inner lists in order.",
+    ),
+    Question(
+      prompt: "When is list.filter_map useful?",
+      answers: [
+        Answer(
+          text: "When transforming items while discarding some of them",
+          is_correct: True,
+        ),
+        Answer(text: "When mutating selected list positions", is_correct: False),
+        Answer(text: "When every item must produce an Error", is_correct: False),
+        Answer(text: "When sorting with a comparator", is_correct: False),
+      ],
+      explanation: "The mapping function returns Option values; Some results are kept and unwrapped, while None results are omitted.",
+    ),
+    Question(
+      prompt: "What does option.map do with None?",
+      answers: [
+        Answer(
+          text: "Returns None without calling the function",
+          is_correct: True,
+        ),
+        Answer(text: "Calls the function with Nil", is_correct: False),
+        Answer(text: "Converts it to Error(Nil)", is_correct: False),
+        Answer(text: "Panics", is_correct: False),
+      ],
+      explanation: "option.map transforms the value inside Some and preserves absence when given None.",
+    ),
+    Question(
+      prompt: "What happens when dict.insert uses a key already present?",
+      answers: [
+        Answer(
+          text: "The new dictionary contains the replacement value",
+          is_correct: True,
+        ),
+        Answer(text: "Both values are stored under the key", is_correct: False),
+        Answer(text: "The original dictionary is mutated", is_correct: False),
+        Answer(text: "The operation always returns Error", is_correct: False),
+      ],
+      explanation: "Dictionary keys are unique. Inserting an existing key returns a new dictionary in which that key maps to the new value.",
+    ),
+    Question(
+      prompt: "What does dict.get communicate through Result?",
+      answers: [
+        Answer(text: "Whether the requested key exists", is_correct: True),
+        Answer(text: "Whether the dictionary is sorted", is_correct: False),
+        Answer(text: "Whether the value is mutable", is_correct: False),
+        Answer(text: "Whether the key is a String", is_correct: False),
+      ],
+      explanation: "Looking up a key may fail, so dict.get returns Ok(value) when present and an Error when absent.",
+    ),
+    Question(
+      prompt: "What benefit do iterators provide for a chain of collection operations?",
+      answers: [
+        Answer(
+          text: "They can avoid creating an intermediate list at every step",
+          is_correct: True,
+        ),
+        Answer(text: "They make collection elements mutable", is_correct: False),
+        Answer(text: "They run every operation concurrently", is_correct: False),
+        Answer(text: "They disable type inference", is_correct: False),
+      ],
+      explanation: "Iterator pipelines can compose transformations lazily and collect the final results when needed.",
+    ),
+    Question(
+      prompt: "What must a recursive function include to terminate normally?",
+      answers: [
+        Answer(text: "A reachable base case", is_correct: True),
+        Answer(text: "A mutable counter", is_correct: False),
+        Answer(text: "A use expression", is_correct: False),
+        Answer(text: "An external function", is_correct: False),
+      ],
+      explanation: "The base case returns without another recursive call. Recursive branches must make progress toward it.",
+    ),
+    Question(
+      prompt: "Why is an accumulator common in tail-recursive functions?",
+      answers: [
+        Answer(
+          text: "It carries partial results into the next call",
+          is_correct: True,
+        ),
+        Answer(text: "It makes values mutable", is_correct: False),
+        Answer(text: "It disables stack reuse", is_correct: False),
+        Answer(text: "It automatically catches errors", is_correct: False),
+      ],
+      explanation: "An accumulator turns work that would happen after recursion into arguments for the next call, often enabling tail-call optimisation.",
+    ),
+    Question(
+      prompt: "What happens when use receives an Error in a Result-sequencing helper?",
+      answers: [
+        Answer(
+          text: "The helper can return early without running the continuation",
+          is_correct: True,
+        ),
+        Answer(text: "The compiler converts it to Ok", is_correct: False),
+        Answer(text: "The rest of the block always runs", is_correct: False),
+        Answer(text: "The process must crash", is_correct: False),
+      ],
+      explanation: "use itself is general callback syntax; with Result helpers, the helper decides to continue for Ok or propagate Error.",
+    ),
+    Question(
+      prompt: "Why does Result have two type parameters?",
+      answers: [
+        Answer(
+          text: "Success and error values can have different types",
+          is_correct: True,
+        ),
+        Answer(
+          text: "One parameter is for each compilation target",
+          is_correct: False,
+        ),
+        Answer(text: "Every Result stores two successes", is_correct: False),
+        Answer(text: "The second parameter is always Nil", is_correct: False),
+      ],
+      explanation: "Result(value, error) describes both the Ok payload type and the Error payload type.",
+    ),
+    Question(
+      prompt: "What advantage comes from defining a custom error type?",
+      answers: [
+        Answer(
+          text: "Callers can exhaustively handle distinct failure cases",
+          is_correct: True,
+        ),
+        Answer(text: "Errors no longer need to be returned", is_correct: False),
+        Answer(
+          text: "The compiler retries failed operations",
+          is_correct: False,
+        ),
+        Answer(text: "Every error becomes a String", is_correct: False),
+      ],
+      explanation: "Variants give failures precise structure, and exhaustive pattern matching keeps handling aligned as cases evolve.",
+    ),
+    Question(
+      prompt: "What is checked when pattern matching an opaque type outside its module?",
+      answers: [
+        Answer(
+          text: "Its hidden constructors cannot be matched directly",
+          is_correct: True,
+        ),
+        Answer(text: "Only wildcard patterns are forbidden", is_correct: False),
+        Answer(text: "The type becomes dynamically typed", is_correct: False),
+        Answer(text: "Its fields become mutable", is_correct: False),
+      ],
+      explanation: "Opacity preserves the module boundary: consumers use public functions rather than depending on private representation details.",
+    ),
+    Question(
+      prompt: "What can exhaustiveness checking reveal after adding a custom-type variant?",
+      answers: [
+        Answer(
+          text: "Case expressions that need to handle the new variant",
+          is_correct: True,
+        ),
+        Answer(text: "Every unused dependency", is_correct: False),
+        Answer(text: "All slow functions", is_correct: False),
+        Answer(text: "Every possible runtime exception", is_correct: False),
+      ],
+      explanation: "The compiler points to pattern matches that no longer cover every possible shape, making type evolution safer.",
+    ),
+    Question(
+      prompt: "Why are custom-type constructors capitalised?",
+      answers: [
+        Answer(
+          text: "They are distinguished from variable and function names",
+          is_correct: True,
+        ),
+        Answer(text: "They are always global constants", is_correct: False),
+        Answer(text: "They bypass type checking", is_correct: False),
+        Answer(text: "They run at compile time", is_correct: False),
+      ],
+      explanation: "PascalCase constructors are syntactically distinct from snake_case bindings, which helps patterns remain unambiguous.",
+    ),
+    Question(
+      prompt: "What does @target(erlang) on a definition mean?",
+      answers: [
+        Answer(
+          text: "The definition is compiled only for the Erlang target",
+          is_correct: True,
+        ),
+        Answer(
+          text: "The entire package can no longer target JavaScript",
+          is_correct: False,
+        ),
+        Answer(
+          text: "The function runs on a remote Erlang node",
+          is_correct: False,
+        ),
+        Answer(text: "All arguments must be Erlang terms", is_correct: False),
+      ],
+      explanation: "Target attributes allow target-specific definitions while the rest of a module or package can remain portable.",
+    ),
+    Question(
+      prompt: "What does @target(javascript) help isolate?",
+      answers: [
+        Answer(
+          text: "Code available only when compiling to JavaScript",
+          is_correct: True,
+        ),
+        Answer(text: "CSS used by the application", is_correct: False),
+        Answer(text: "Functions that return strings", is_correct: False),
+        Answer(text: "Tests that run in a browser", is_correct: False),
+      ],
+      explanation: "The attribute marks definitions whose implementation or dependencies are specific to the JavaScript target.",
+    ),
+    Question(
+      prompt: "On which target are BEAM processes directly available?",
+      answers: [
+        Answer(text: "Erlang", is_correct: True),
+        Answer(text: "JavaScript", is_correct: False),
+        Answer(text: "WebAssembly", is_correct: False),
+        Answer(text: "CSS", is_correct: False),
+      ],
+      explanation: "Lightweight BEAM processes and their mailboxes are capabilities of the Erlang runtime target.",
+    ),
+    Question(
+      prompt: "How do Erlang processes primarily communicate?",
+      answers: [
+        Answer(text: "By sending immutable messages", is_correct: True),
+        Answer(text: "By sharing mutable objects", is_correct: False),
+        Answer(text: "By editing global variables", is_correct: False),
+        Answer(text: "By calling browser events", is_correct: False),
+      ],
+      explanation: "Each process has its own mailbox and state. Message passing avoids relying on shared mutable memory.",
+    ),
+    Question(
+      prompt: "What does linking two BEAM processes provide?",
+      answers: [
+        Answer(
+          text: "A failure signal relationship between them",
+          is_correct: True,
+        ),
+        Answer(text: "Shared access to all local variables", is_correct: False),
+        Answer(text: "A combined mailbox", is_correct: False),
+        Answer(text: "Automatic HTTP communication", is_correct: False),
+      ],
+      explanation: "Links propagate exit signals, forming part of Erlang's fault-tolerance and supervision model.",
+    ),
+    Question(
+      prompt: "What is an actor responsible for in the actor model?",
+      answers: [
+        Answer(
+          text: "Its own state and handling incoming messages",
+          is_correct: True,
+        ),
+        Answer(text: "Mutating every other actor's state", is_correct: False),
+        Answer(text: "Compiling imported modules", is_correct: False),
+        Answer(text: "Rendering CSS without messages", is_correct: False),
+      ],
+      explanation: "Actors encapsulate state and process messages one at a time, communicating with other actors by sending messages.",
+    ),
+    Question(
+      prompt: "Why must external function type declarations be accurate?",
+      answers: [
+        Answer(
+          text: "The Gleam compiler trusts that boundary",
+          is_correct: True,
+        ),
+        Answer(text: "They determine code formatting", is_correct: False),
+        Answer(text: "They are used only for documentation", is_correct: False),
+        Answer(text: "They make native code immutable", is_correct: False),
+      ],
+      explanation: "Native code is outside Gleam's type checking. An incorrect external declaration can break the guarantees expected by Gleam code.",
+    ),
+    Question(
+      prompt: "What is gleam.toml primarily used for?",
+      answers: [
+        Answer(
+          text: "Package metadata, dependencies, and build configuration",
+          is_correct: True,
+        ),
+        Answer(text: "Storing compiled JavaScript", is_correct: False),
+        Answer(text: "Writing unit-test assertions", is_correct: False),
+        Answer(text: "Defining HTML elements", is_correct: False),
+      ],
+      explanation: "The project manifest names and configures the package and declares the packages it depends on.",
+    ),
+    Question(
+      prompt: "Where are test-only package dependencies normally declared?",
+      answers: [
+        Answer(
+          text: "In the dev-dependencies section of gleam.toml",
+          is_correct: True,
+        ),
+        Answer(text: "Inside every test function", is_correct: False),
+        Answer(text: "In manifest.toml by hand", is_correct: False),
+        Answer(text: "As custom-type variants", is_correct: False),
+      ],
+      explanation: "Development dependencies support testing and tooling without becoming normal runtime dependencies of the package.",
+    ),
+    Question(
+      prompt: "What does gleam format provide?",
+      answers: [
+        Answer(
+          text: "A consistent canonical style for Gleam source",
+          is_correct: True,
+        ),
+        Answer(text: "Runtime performance profiling", is_correct: False),
+        Answer(text: "Automatic type generation from JSON", is_correct: False),
+        Answer(text: "Package publication", is_correct: False),
+      ],
+      explanation: "The formatter removes most style debates and keeps source layout consistent across a project.",
+    ),
+    Question(
+      prompt: "What does gleam test conventionally run?",
+      answers: [
+        Answer(text: "The project's test main module", is_correct: True),
+        Answer(text: "Only functions named test in src", is_correct: False),
+        Answer(text: "A browser compatibility scanner", is_correct: False),
+        Answer(text: "The Hex package publisher", is_correct: False),
+      ],
+      explanation: "Gleam test projects commonly use a test module and a library such as gleeunit to discover and run test functions.",
+    ),
+    Question(
+      prompt: "What prefix marks a documentation comment?",
+      answers: [
+        Answer(text: "///", is_correct: True),
+        Answer(text: "//", is_correct: False),
+        Answer(text: "#", is_correct: False),
+        Answer(text: "<!--", is_correct: False),
+      ],
+      explanation: "Triple-slash comments document the following public definition and can appear in generated package documentation.",
+    ),
+    Question(
+      prompt: "What is Hex in the Gleam ecosystem?",
+      answers: [
+        Answer(
+          text: "A package registry used to publish and fetch packages",
+          is_correct: True,
+        ),
+        Answer(text: "A binary number type", is_correct: False),
+        Answer(text: "The JavaScript compiler", is_correct: False),
+        Answer(text: "A browser testing framework", is_correct: False),
+      ],
+      explanation: "Gleam packages can be distributed through Hex and added to projects as versioned dependencies.",
+    ),
+    Question(
+      prompt: "Why does a package lock its dependency versions in a manifest?",
+      answers: [
+        Answer(
+          text: "To make dependency resolution reproducible",
+          is_correct: True,
+        ),
+        Answer(text: "To prevent source formatting", is_correct: False),
+        Answer(text: "To hide package names", is_correct: False),
+        Answer(
+          text: "To choose the compilation target at runtime",
+          is_correct: False,
+        ),
+      ],
+      explanation: "A resolved manifest lets collaborators and automated builds use the same package versions.",
+    ),
+    Question(
+      prompt: "In semantic versioning, what usually signals a breaking public API change?",
+      answers: [
+        Answer(text: "A major version increase", is_correct: True),
+        Answer(text: "A patch version increase", is_correct: False),
+        Answer(text: "No version change", is_correct: False),
+        Answer(text: "A dependency download", is_correct: False),
+      ],
+      explanation: "For stable releases, semantic versioning reserves major-version changes for incompatible public API changes.",
+    ),
+    Question(
+      prompt: "In Lustre's architecture, what does update produce from a model and message?",
+      answers: [
+        Answer(
+          text: "The next model, optionally alongside effects",
+          is_correct: True,
+        ),
+        Answer(text: "A mutable DOM node", is_correct: False),
+        Answer(text: "A CSS stylesheet", is_correct: False),
+        Answer(text: "A database transaction", is_correct: False),
+      ],
+      explanation: "Lustre applications evolve explicitly: messages describe events and update calculates the next application state.",
+    ),
+    Question(
+      prompt: "What is the job of a Lustre view function?",
+      answers: [
+        Answer(
+          text: "Describe UI elements from the current model",
+          is_correct: True,
+        ),
+        Answer(text: "Mutate the model directly", is_correct: False),
+        Answer(text: "Compile Gleam dependencies", is_correct: False),
+        Answer(text: "Store browser cookies automatically", is_correct: False),
+      ],
+      explanation: "The view is a declarative description of the interface for a given model, with events producing messages.",
+    ),
+    Question(
+      prompt: "Why are Lustre messages represented with a custom type?",
+      answers: [
+        Answer(
+          text: "Every application event can be handled explicitly",
+          is_correct: True,
+        ),
+        Answer(text: "Messages must be converted to HTML", is_correct: False),
+        Answer(text: "Custom types make the DOM mutable", is_correct: False),
+        Answer(text: "Browsers require PascalCase events", is_correct: False),
+      ],
+      explanation: "A custom Msg type enumerates the events that can change state, and update can pattern match them exhaustively.",
+    ),
+    Question(
+      prompt: "What should a Lustre event handler generally return?",
+      answers: [
+        Answer(text: "A message for the update function", is_correct: True),
+        Answer(text: "A replacement HTML document", is_correct: False),
+        Answer(text: "A mutated model reference", is_correct: False),
+        Answer(text: "A CSS selector", is_correct: False),
+      ],
+      explanation: "Events are translated into typed messages, keeping browser interaction connected to the application's update logic.",
+    ),
+    Question(
+      prompt: "Why should Lustre keep side effects separate from pure state transitions?",
+      answers: [
+        Answer(
+          text: "It keeps state logic predictable and easier to test",
+          is_correct: True,
+        ),
+        Answer(text: "It makes every effect run twice", is_correct: False),
+        Answer(text: "It removes the need for messages", is_correct: False),
+        Answer(text: "It makes the model mutable", is_correct: False),
+      ],
+      explanation: "Separating effects from model calculation preserves a clear data flow and lets pure update logic be tested with ordinary values.",
+    ),
   ]
 }
 
