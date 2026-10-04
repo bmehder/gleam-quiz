@@ -1,18 +1,19 @@
-import gleam/list
+import quiz/domain.{type Question, type Quiz, Answer, Question, Quiz}
 
-pub type Answer {
-  Answer(text: String, is_correct: Bool)
-}
-
-pub type Question {
-  Question(prompt: String, answers: List(Answer), explanation: String)
+pub fn quiz() -> Quiz {
+  Quiz(
+    id: "gleam",
+    title: "Gleam",
+    description: "100 questions about the Gleam language, ecosystem, and Lustre.",
+    questions: questions(),
+  )
 }
 
 /// Return the canonical question bank.
 ///
 /// Keep the correct answer first here to make questions easy to author and review.
 /// The application uses shuffled to randomise both levels for each quiz run.
-pub fn all() -> List(Question) {
+fn questions() -> List(Question) {
   [
     Question(
       prompt: "What do the variants of a Gleam custom type represent?",
@@ -1303,12 +1304,4 @@ pub fn all() -> List(Question) {
       explanation: "Separating effects from model calculation preserves a clear data flow and lets pure update logic be tested with ordinary values.",
     ),
   ]
-}
-
-pub fn shuffled() -> List(Question) {
-  all()
-  |> list.map(fn(question) {
-    Question(..question, answers: list.shuffle(question.answers))
-  })
-  |> list.shuffle
 }

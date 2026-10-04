@@ -5,43 +5,61 @@ import lustre/attribute
 import lustre/element.{type Element}
 import lustre/element/html
 import lustre/event
-import questions.{type Answer, type Question}
+import quiz/domain.{type Answer, type Question, type Quiz}
+import quizzes/catalog
 
 pub type Model {
+  ChoosingQuiz
   Answering(
+    quiz: Quiz,
     current: Question,
     remaining: List(Question),
     score: Int,
     answered_count: Int,
   )
   Reviewing(
+    quiz: Quiz,
     current: Question,
     remaining: List(Question),
     selected: Answer,
     score: Int,
     answered_count: Int,
   )
-  Finished(score: Int, total: Int)
+  Finished(quiz: Quiz, score: Int, total: Int)
 }
 
 pub type Msg {
+  UserStartedQuiz(Quiz)
   UserSelectedAnswer(Answer)
   UserClickedNext
   UserClickedRestartQuiz
+  UserClickedChooseQuiz
 }
 
 pub fn initial_model() -> Model {
-  case questions.shuffled() {
-    [first, ..rest] ->
-      Answering(current: first, remaining: rest, score: 0, answered_count: 0)
+  ChoosingQuiz
+}
 
-    [] -> Finished(score: 0, total: 0)
+fn start_quiz(quiz: Quiz) -> Model {
+  case domain.shuffled_questions(quiz) {
+    [first, ..rest] ->
+      Answering(
+        quiz: quiz,
+        current: first,
+        remaining: rest,
+        score: 0,
+        answered_count: 0,
+      )
+
+    [] -> Finished(quiz: quiz, score: 0, total: 0)
   }
 }
 
 pub fn update(model: Model, msg: Msg) -> Model {
   case model, msg {
-    Answering(current, remaining, score, answered_count),
+    ChoosingQuiz, UserStartedQuiz(quiz) -> start_quiz(quiz)
+
+    Answering(quiz, current, remaining, score, answered_count),
       UserSelectedAnswer(answer)
     -> {
       let new_score = case answer.is_correct {
@@ -50,6 +68,7 @@ pub fn update(model: Model, msg: Msg) -> Model {
       }
 
       Reviewing(
+        quiz: quiz,
         current: current,
         remaining: remaining,
         selected: answer,
@@ -58,18 +77,23 @@ pub fn update(model: Model, msg: Msg) -> Model {
       )
     }
 
-    Reviewing(_, [next, ..rest], _, score, answered_count), UserClickedNext ->
+    Reviewing(quiz, _, [next, ..rest], _, score, answered_count),
+      UserClickedNext
+    ->
       Answering(
+        quiz: quiz,
         current: next,
         remaining: rest,
         score: score,
         answered_count: answered_count,
       )
 
-    Reviewing(_, [], _, score, answered_count), UserClickedNext ->
-      Finished(score: score, total: answered_count)
+    Reviewing(quiz, _, [], _, score, answered_count), UserClickedNext ->
+      Finished(quiz: quiz, score: score, total: answered_count)
 
-    Finished(_, _), UserClickedRestartQuiz -> initial_model()
+    Finished(quiz, _, _), UserClickedRestartQuiz -> start_quiz(quiz)
+
+    Finished(_, _, _), UserClickedChooseQuiz -> ChoosingQuiz
 
     _, _ -> model
   }
@@ -87,25 +111,83 @@ pub fn view(model: Model) -> Element(Msg) {
       ),
     ],
     [
-      html.div([attribute.class("w-full max-w-2xl")], [
+      html.div([attribute.class("w-full max-w-3xl")], [
         html.h1(
           [
             attribute.class(
               "mb-6 text-center text-sm font-bold tracking-[0.3em] text-fuchsia-400 uppercase",
             ),
           ],
-          [html.text("Gleam Quiz")],
+          [html.text(view_title(model))],
         ),
         case model {
-          Answering(current, remaining, _, answered_count) ->
+          ChoosingQuiz -> view_quiz_chooser(catalog.all())
+
+          Answering(_, current, remaining, _, answered_count) ->
             view_answering(current, remaining, answered_count)
 
-          Reviewing(current, remaining, selected, _, answered_count) ->
+          Reviewing(_, current, remaining, selected, _, answered_count) ->
             view_reviewing(current, remaining, selected, answered_count)
 
-          Finished(score, total) -> view_finished(score, total)
+          Finished(quiz, score, total) -> view_finished(quiz, score, total)
         },
       ]),
+    ],
+  )
+}
+
+fn view_title(model: Model) -> String {
+  case model {
+    ChoosingQuiz -> "Quiz Library"
+    Answering(quiz, _, _, _, _) -> quiz.title <> " Quiz"
+    Reviewing(quiz, _, _, _, _, _) -> quiz.title <> " Quiz"
+    Finished(quiz, _, _) -> quiz.title <> " Quiz"
+  }
+}
+
+fn view_quiz_chooser(quizzes: List(Quiz)) -> Element(Msg) {
+  html.section(card_attributes(), [
+    html.h2([attribute.class("text-3xl font-semibold text-white")], [
+      html.text("Choose a quiz"),
+    ]),
+    html.p([attribute.class("mt-3 leading-relaxed text-slate-400")], [
+      html.text(
+        "Pick a subject. Questions and answers are shuffled every time.",
+      ),
+    ]),
+    html.div(
+      [attribute.class("mt-8 grid gap-4 sm:grid-cols-2")],
+      list.map(quizzes, view_quiz_card),
+    ),
+  ])
+}
+
+fn view_quiz_card(quiz: Quiz) -> Element(Msg) {
+  html.article(
+    [
+      attribute.class(
+        "flex flex-col rounded-2xl border border-slate-700 bg-slate-800/60 p-5",
+      ),
+    ],
+    [
+      html.p([attribute.class("text-sm font-medium text-fuchsia-300")], [
+        html.text(int.to_string(list.length(quiz.questions)) <> " questions"),
+      ]),
+      html.h3([attribute.class("mt-2 text-xl font-semibold text-white")], [
+        html.text(quiz.title),
+      ]),
+      html.p([attribute.class("mt-3 grow leading-relaxed text-slate-400")], [
+        html.text(quiz.description),
+      ]),
+      html.button(
+        [
+          attribute.class(
+            "mt-6 rounded-xl bg-fuchsia-500 px-5 py-3 font-semibold text-white transition hover:bg-fuchsia-400 focus:ring-2 focus:ring-fuchsia-400 focus:ring-offset-2 focus:ring-offset-slate-900 focus:outline-none",
+          ),
+          event.on_click(UserStartedQuiz(quiz)),
+        ],
+        [html.text("Start quiz")],
+      ),
     ],
   )
 }
@@ -247,7 +329,7 @@ fn view_progress(current: Int, total: Int) -> Element(Msg) {
   )
 }
 
-fn view_finished(score: Int, total: Int) -> Element(Msg) {
+fn view_finished(quiz: Quiz, score: Int, total: Int) -> Element(Msg) {
   html.section(card_attributes(), [
     html.div(
       [
@@ -264,9 +346,18 @@ fn view_finished(score: Int, total: Int) -> Element(Msg) {
       html.text(int.to_string(score) <> " / " <> int.to_string(total)),
     ]),
     html.p([attribute.class("mt-3 text-center text-slate-400")], [
-      html.text("You’ve reached the end of this Gleam quiz."),
+      html.text("You’ve reached the end of the " <> quiz.title <> " quiz."),
     ]),
-    html.div([attribute.class("mt-8 flex justify-center")], [
+    html.div([attribute.class("mt-8 flex flex-wrap justify-center gap-3")], [
+      html.button(
+        [
+          attribute.class(
+            "rounded-xl border border-slate-700 bg-slate-800 px-5 py-3 font-semibold text-slate-200 transition hover:border-fuchsia-400 hover:text-white focus:ring-2 focus:ring-fuchsia-400 focus:ring-offset-2 focus:ring-offset-slate-900 focus:outline-none",
+          ),
+          event.on_click(UserClickedChooseQuiz),
+        ],
+        [html.text("Choose another quiz")],
+      ),
       html.button(
         [
           attribute.class(
