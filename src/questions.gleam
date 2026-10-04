@@ -239,5 +239,341 @@ pub fn all() -> List(Question) {
       ],
       explanation: "Other modules can hold an opaque value and use the defining module's public API, but they cannot construct or pattern match on its hidden representation.",
     ),
+    Question(
+      prompt: "When can Gleam infer a function's types?",
+      answers: [
+        Answer(
+          text: "When the implementation and its uses provide enough information",
+          is_correct: True,
+        ),
+        Answer(text: "Only when every value is a String", is_correct: False),
+        Answer(
+          text: "Only for private functions with no arguments",
+          is_correct: False,
+        ),
+        Answer(text: "Never; every type must be annotated", is_correct: False),
+      ],
+      explanation: "Gleam performs full static type inference. Function annotations are still good documentation and help communicate intent.",
+    ),
+    Question(
+      prompt: "How does a Gleam function return a value normally?",
+      answers: [
+        Answer(
+          text: "The final expression in its body becomes the return value",
+          is_correct: True,
+        ),
+        Answer(text: "It must use a return keyword", is_correct: False),
+        Answer(text: "It assigns the value to result", is_correct: False),
+        Answer(text: "It sends the value to the caller", is_correct: False),
+      ],
+      explanation: "Gleam is expression-oriented. Blocks and function bodies evaluate to their final expression, so there is no ordinary return keyword.",
+    ),
+    Question(
+      prompt: "What is the result of 5 / 2 in Gleam?",
+      answers: [
+        Answer(text: "2", is_correct: True),
+        Answer(text: "2.5", is_correct: False),
+        Answer(text: "2.0", is_correct: False),
+        Answer(text: "Error(Division)", is_correct: False),
+      ],
+      explanation: "Both operands are Int values, so / performs integer division. Gleam does not implicitly convert between Int and Float.",
+    ),
+    Question(
+      prompt: "Which operator adds two Float values in Gleam?",
+      answers: [
+        Answer(text: "+.", is_correct: True),
+        Answer(text: "+", is_correct: False),
+        Answer(text: "++", is_correct: False),
+        Answer(text: "<>", is_correct: False),
+      ],
+      explanation: "Numeric operators are not overloaded. Float arithmetic uses operators such as +., -., *., and /., while Int arithmetic omits the dot.",
+    ),
+    Question(
+      prompt: "Which operator concatenates two strings?",
+      answers: [
+        Answer(text: "<>", is_correct: True),
+        Answer(text: "+", is_correct: False),
+        Answer(text: "++", is_correct: False),
+        Answer(text: "|>", is_correct: False),
+      ],
+      explanation: "The <> operator joins strings. The + operator is reserved for Int addition, so there is no overloaded string addition.",
+    ),
+    Question(
+      prompt: "How does Gleam compare values with ==?",
+      answers: [
+        Answer(
+          text: "Structurally, with both sides required to have the same type",
+          is_correct: True,
+        ),
+        Answer(text: "By comparing their memory addresses", is_correct: False),
+        Answer(text: "By converting both sides to strings", is_correct: False),
+        Answer(text: "Only primitive values can be compared", is_correct: False),
+      ],
+      explanation: "Equality works across Gleam types and compares their structure rather than object identity. The two operands must share a type.",
+    ),
+    Question(
+      prompt: "Which statement about null is true in Gleam?",
+      answers: [
+        Answer(
+          text: "Ordinary Gleam values cannot implicitly be null",
+          is_correct: True,
+        ),
+        Answer(text: "Every custom type includes null", is_correct: False),
+        Answer(text: "Strings become null when empty", is_correct: False),
+        Answer(text: "Null and Nil are interchangeable", is_correct: False),
+      ],
+      explanation: "Absence is represented explicitly with types such as Option. Nil is a real type with one value, not an implicit missing value.",
+    ),
+    Question(
+      prompt: "What is true when calling a function with labelled arguments?",
+      answers: [
+        Answer(
+          text: "Labelled arguments can be supplied in a different order",
+          is_correct: True,
+        ),
+        Answer(text: "Labels create a dictionary at runtime", is_correct: False),
+        Answer(text: "Every argument must have a label", is_correct: False),
+        Answer(text: "Labels change the argument's type", is_correct: False),
+      ],
+      explanation: "Labels improve readability and can be reordered at the call site. Unlabelled arguments must still come before labelled ones.",
+    ),
+    Question(
+      prompt: "What does the a mean in List(a)?",
+      answers: [
+        Answer(
+          text: "A type parameter representing the list's element type",
+          is_correct: True,
+        ),
+        Answer(text: "The first item in the list", is_correct: False),
+        Answer(text: "A module alias", is_correct: False),
+        Answer(text: "The list's memory address", is_correct: False),
+      ],
+      explanation: "Lowercase type variables make a definition generic. List(Int) and List(String) use the same List type with different element types.",
+    ),
+    Question(
+      prompt: "What does case x, y { ... } enable?",
+      answers: [
+        Answer(
+          text: "Pattern matching on multiple values at the same time",
+          is_correct: True,
+        ),
+        Answer(
+          text: "Running two case expressions concurrently",
+          is_correct: False,
+        ),
+        Answer(text: "Combining x and y into a list", is_correct: False),
+        Answer(text: "Ignoring the value of y", is_correct: False),
+      ],
+      explanation: "A case expression can have multiple subjects. Every clause then supplies the same number of comma-separated patterns.",
+    ),
+    Question(
+      prompt: "What is the purpose of a guard on a case clause?",
+      answers: [
+        Answer(
+          text: "To add a Boolean condition after a pattern matches",
+          is_correct: True,
+        ),
+        Answer(text: "To catch runtime exceptions", is_correct: False),
+        Answer(text: "To make a private constructor public", is_correct: False),
+        Answer(
+          text: "To prevent the compiler from checking the clause",
+          is_correct: False,
+        ),
+      ],
+      explanation: "A guard refines a matching clause with an additional condition. If the guard is false, matching continues with later clauses.",
+    ),
+    Question(
+      prompt: "How is custom iteration usually expressed in Gleam?",
+      answers: [
+        Answer(
+          text: "With recursion, often hidden behind standard-library functions",
+          is_correct: True,
+        ),
+        Answer(text: "With mutable for loops", is_correct: False),
+        Answer(text: "With goto labels", is_correct: False),
+        Answer(text: "By modifying a global counter", is_correct: False),
+      ],
+      explanation: "Gleam has no loop statements. Common iterations use functions such as list.map and list.fold, while custom loops use recursion.",
+    ),
+    Question(
+      prompt: "When can a recursive call be tail-call optimised?",
+      answers: [
+        Answer(
+          text: "When the recursive call is the final operation",
+          is_correct: True,
+        ),
+        Answer(text: "Whenever the function is public", is_correct: False),
+        Answer(text: "Only when processing strings", is_correct: False),
+        Answer(text: "When the function has no base case", is_correct: False),
+      ],
+      explanation: "A tail call lets the runtime reuse the current stack frame. Accumulators often help move remaining work into the recursive call's arguments.",
+    ),
+    Question(
+      prompt: "What does list.filter keep?",
+      answers: [
+        Answer(
+          text: "Elements for which its predicate returns True",
+          is_correct: True,
+        ),
+        Answer(text: "Only the first element", is_correct: False),
+        Answer(text: "The predicate's return values", is_correct: False),
+        Answer(
+          text: "Elements for which the predicate returns False",
+          is_correct: False,
+        ),
+      ],
+      explanation: "list.filter returns a new list containing the original elements accepted by the predicate.",
+    ),
+    Question(
+      prompt: "What is list.fold useful for?",
+      answers: [
+        Answer(
+          text: "Combining a list into an accumulated result",
+          is_correct: True,
+        ),
+        Answer(text: "Sorting a list in place", is_correct: False),
+        Answer(
+          text: "Turning every item into a separate list",
+          is_correct: False,
+        ),
+        Answer(text: "Reading an item by index", is_correct: False),
+      ],
+      explanation: "list.fold walks left-to-right, passing an accumulator and each element to a function that produces the next accumulator.",
+    ),
+    Question(
+      prompt: "What does list.find return when no element matches?",
+      answers: [
+        Answer(text: "Error(Nil)", is_correct: True),
+        Answer(text: "None", is_correct: False),
+        Answer(text: "False", is_correct: False),
+        Answer(text: "An empty list", is_correct: False),
+      ],
+      explanation: "list.find returns Result(element, Nil): Ok(element) for the first match and Error(Nil) when there is no match.",
+    ),
+    Question(
+      prompt: "What does result.map do with an Error value?",
+      answers: [
+        Answer(
+          text: "Returns the Error without calling the mapping function",
+          is_correct: True,
+        ),
+        Answer(text: "Converts it into Ok", is_correct: False),
+        Answer(
+          text: "Calls the mapping function with the error",
+          is_correct: False,
+        ),
+        Answer(text: "Panics immediately", is_correct: False),
+      ],
+      explanation: "result.map transforms only the success value inside Ok. An existing Error passes through unchanged.",
+    ),
+    Question(
+      prompt: "How does result.try differ from result.map?",
+      answers: [
+        Answer(
+          text: "Its function returns another Result, allowing fallible steps to chain",
+          is_correct: True,
+        ),
+        Answer(text: "It retries an operation several times", is_correct: False),
+        Answer(text: "It ignores Error values", is_correct: False),
+        Answer(text: "It works only with lists of results", is_correct: False),
+      ],
+      explanation: "result.try applies a Result-returning function to an Ok value and stops at the first Error, avoiding nested Result values.",
+    ),
+    Question(
+      prompt: "What does result.unwrap(Error(error), default) return?",
+      answers: [
+        Answer(text: "default", is_correct: True),
+        Answer(text: "error", is_correct: False),
+        Answer(text: "Nil", is_correct: False),
+        Answer(text: "It always panics", is_correct: False),
+      ],
+      explanation: "result.unwrap extracts an Ok value or uses the supplied default when given an Error.",
+    ),
+    Question(
+      prompt: "What is a Dict in Gleam's standard library?",
+      answers: [
+        Answer(
+          text: "A collection that associates unique keys with values",
+          is_correct: True,
+        ),
+        Answer(text: "A list whose elements must be strings", is_correct: False),
+        Answer(text: "A mutable global object", is_correct: False),
+        Answer(
+          text: "A custom type with exactly two variants",
+          is_correct: False,
+        ),
+      ],
+      explanation: "gleam/dict provides an immutable key-value collection, similar to a hashmap or table in other languages.",
+    ),
+    Question(
+      prompt: "What distinguishes a Set from a List?",
+      answers: [
+        Answer(
+          text: "A Set stores unique values without list ordering semantics",
+          is_correct: True,
+        ),
+        Answer(
+          text: "A Set can contain values of unrelated types",
+          is_correct: False,
+        ),
+        Answer(text: "A Set is mutable", is_correct: False),
+        Answer(
+          text: "A Set always contains exactly two values",
+          is_correct: False,
+        ),
+      ],
+      explanation: "gleam/set models membership of unique values. Lists preserve sequence and may contain duplicates.",
+    ),
+    Question(
+      prompt: "What is echo primarily for?",
+      answers: [
+        Answer(
+          text: "Debug-printing a value of any type while returning that value",
+          is_correct: True,
+        ),
+        Answer(text: "Rendering text in a browser", is_correct: False),
+        Answer(text: "Converting any value into a String", is_correct: False),
+        Answer(text: "Sending a message to an actor", is_correct: False),
+      ],
+      explanation: "echo is a debugging keyword. It prints the source location and value, then evaluates to that same value, so it can sit inside a pipeline.",
+    ),
+    Question(
+      prompt: "What does @external allow a Gleam module to use?",
+      answers: [
+        Answer(
+          text: "A function implemented in Erlang or JavaScript",
+          is_correct: True,
+        ),
+        Answer(text: "An untyped Gleam function", is_correct: False),
+        Answer(
+          text: "A private function from another Gleam module",
+          is_correct: False,
+        ),
+        Answer(
+          text: "A package that is not listed as a dependency",
+          is_correct: False,
+        ),
+      ],
+      explanation: "External functions form the typed boundary to runtime-native code. Gleam trusts their declared types, so that boundary requires care.",
+    ),
+    Question(
+      prompt: "What enables much Gleam code to run on both Erlang and JavaScript?",
+      answers: [
+        Answer(
+          text: "The compiler supports both targets and shared Gleam code is portable",
+          is_correct: True,
+        ),
+        Answer(
+          text: "JavaScript is translated into Erlang first",
+          is_correct: False,
+        ),
+        Answer(text: "Every function runs in a browser", is_correct: False),
+        Answer(
+          text: "Both targets expose identical native APIs",
+          is_correct: False,
+        ),
+      ],
+      explanation: "Pure Gleam code commonly works on either target. Target-specific externals and runtime capabilities can still limit portability.",
+    ),
   ]
 }
