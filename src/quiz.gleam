@@ -27,6 +27,7 @@ pub type Model {
     score: Int,
     answered_count: Int,
   )
+  ConfirmingQuizExit(previous: Model)
   Finished(quiz: Quiz, score: Int, total: Int)
 }
 
@@ -36,6 +37,8 @@ pub type Msg {
   UserClickedNextQuestion
   UserClickedRestartQuiz
   UserClickedChooseQuiz
+  UserConfirmedQuizExit
+  UserCancelledQuizExit
 }
 
 pub fn initial_model() -> Model {
@@ -95,7 +98,17 @@ pub fn update(model: Model, msg: Msg) -> Model {
 
     Finished(quiz, _, _), UserClickedRestartQuiz -> start_quiz(quiz)
 
+    Answering(_, _, _, _, _), UserClickedChooseQuiz ->
+      ConfirmingQuizExit(previous: model)
+
+    Reviewing(_, _, _, _, _, _), UserClickedChooseQuiz ->
+      ConfirmingQuizExit(previous: model)
+
     Finished(_, _, _), UserClickedChooseQuiz -> ChoosingQuiz
+
+    ConfirmingQuizExit(_), UserConfirmedQuizExit -> ChoosingQuiz
+
+    ConfirmingQuizExit(previous), UserCancelledQuizExit -> previous
 
     _, _ -> model
   }
@@ -113,7 +126,7 @@ pub fn view(model: Model) -> Element(Msg) {
       ),
     ],
     [
-      html.div([attribute.class("w-full max-w-3xl")], [
+      html.div(page_attributes(model), [
         html.h1(
           [
             attribute.class(
@@ -122,20 +135,36 @@ pub fn view(model: Model) -> Element(Msg) {
           ],
           [html.text(view_title(model))],
         ),
-        case model {
-          ChoosingQuiz -> view_quiz_chooser(catalog.all())
-
-          Answering(_, current, remaining, _, answered_count) ->
-            view_answering(current, remaining, answered_count)
-
-          Reviewing(_, current, remaining, selected, _, answered_count) ->
-            view_reviewing(current, remaining, selected, answered_count)
-
-          Finished(quiz, score, total) -> view_finished(quiz, score, total)
-        },
+        view_content(model),
       ]),
+      ..view_confirmation(model)
     ],
   )
+}
+
+fn page_attributes(model: Model) {
+  let attributes = [attribute.class("w-full max-w-3xl")]
+
+  case model {
+    ConfirmingQuizExit(_) -> [attribute.attribute("inert", ""), ..attributes]
+    _ -> attributes
+  }
+}
+
+fn view_content(model: Model) -> Element(Msg) {
+  case model {
+    ChoosingQuiz -> view_quiz_chooser(catalog.all())
+
+    Answering(_, current, remaining, _, answered_count) ->
+      view_answering(current, remaining, answered_count)
+
+    Reviewing(_, current, remaining, selected, _, answered_count) ->
+      view_reviewing(current, remaining, selected, answered_count)
+
+    ConfirmingQuizExit(previous) -> view_content(previous)
+
+    Finished(quiz, score, total) -> view_finished(quiz, score, total)
+  }
 }
 
 fn view_title(model: Model) -> String {
@@ -143,7 +172,72 @@ fn view_title(model: Model) -> String {
     ChoosingQuiz -> "Quiz Library"
     Answering(quiz, _, _, _, _) -> quiz.title <> " Quiz"
     Reviewing(quiz, _, _, _, _, _) -> quiz.title <> " Quiz"
+    ConfirmingQuizExit(previous) -> view_title(previous)
     Finished(quiz, _, _) -> quiz.title <> " Quiz"
+  }
+}
+
+fn view_confirmation(model: Model) -> List(Element(Msg)) {
+  case model {
+    ConfirmingQuizExit(_) -> [
+      html.div(
+        [
+          attribute.class(
+            "fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 px-4 backdrop-blur-sm",
+          ),
+        ],
+        [
+          html.dialog(
+            [
+              attribute.open(True),
+              attribute.aria_modal(True),
+              attribute.aria_labelledby("quiz-exit-title"),
+              attribute.class(
+                "m-0 w-full max-w-md rounded-3xl border border-slate-700 bg-slate-900 p-6 text-slate-100 shadow-2xl shadow-black/50 sm:p-8",
+              ),
+            ],
+            [
+              html.h2(
+                [
+                  attribute.id("quiz-exit-title"),
+                  attribute.class("text-2xl font-semibold text-white"),
+                ],
+                [html.text("Leave this quiz?")],
+              ),
+              html.p([attribute.class("mt-3 leading-relaxed text-slate-400")], [
+                html.text("Your progress in this attempt will be lost."),
+              ]),
+              html.div(
+                [attribute.class("mt-7 flex flex-wrap justify-end gap-3")],
+                [
+                  html.button(
+                    [
+                      attribute.autofocus(True),
+                      attribute.class(
+                        "rounded-xl border border-slate-700 bg-slate-800 px-5 py-3 font-semibold text-slate-200 transition hover:border-fuchsia-400 hover:text-white focus:ring-2 focus:ring-fuchsia-400 focus:ring-offset-2 focus:ring-offset-slate-900 focus:outline-none",
+                      ),
+                      event.on_click(UserCancelledQuizExit),
+                    ],
+                    [html.text("Keep going")],
+                  ),
+                  html.button(
+                    [
+                      attribute.class(
+                        "rounded-xl bg-rose-500 px-5 py-3 font-semibold text-white transition hover:bg-rose-400 focus:ring-2 focus:ring-rose-400 focus:ring-offset-2 focus:ring-offset-slate-900 focus:outline-none",
+                      ),
+                      event.on_click(UserConfirmedQuizExit),
+                    ],
+                    [html.text("Leave quiz")],
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ],
+      ),
+    ]
+
+    _ -> []
   }
 }
 
@@ -317,18 +411,32 @@ fn view_reviewed_answer(answer: Answer, selected: Answer) -> Element(Msg) {
 }
 
 fn view_progress(current: Int, total: Int) -> Element(Msg) {
-  html.p(
-    [
-      attribute.class(
-        "text-sm font-medium tracking-wide text-slate-400 tabular-nums",
-      ),
-    ],
-    [
-      html.text(
-        "Question " <> int.to_string(current) <> " of " <> int.to_string(total),
-      ),
-    ],
-  )
+  html.div([attribute.class("flex items-center justify-between gap-4")], [
+    html.button(
+      [
+        attribute.class(
+          "text-sm font-medium text-slate-400 transition hover:text-fuchsia-300 focus:outline-none focus-visible:text-fuchsia-300",
+        ),
+        event.on_click(UserClickedChooseQuiz),
+      ],
+      [html.text("← All quizzes")],
+    ),
+    html.p(
+      [
+        attribute.class(
+          "text-sm font-medium tracking-wide text-slate-400 tabular-nums",
+        ),
+      ],
+      [
+        html.text(
+          "Question "
+          <> int.to_string(current)
+          <> " of "
+          <> int.to_string(total),
+        ),
+      ],
+    ),
+  ])
 }
 
 fn view_finished(quiz: Quiz, score: Int, total: Int) -> Element(Msg) {
