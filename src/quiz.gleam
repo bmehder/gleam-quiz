@@ -199,7 +199,7 @@ fn view_confirmation(model: Model) -> List(Element(Msg)) {
           attribute.tabindex(-1),
           attribute.aria_labelledby("quiz-exit-title"),
           attribute.class(
-            "w-[calc(100%-2rem)] max-w-md rounded-3xl border border-slate-700 bg-slate-900 p-6 text-slate-100 shadow-2xl shadow-black/50 backdrop:bg-slate-950/80 backdrop:backdrop-blur-sm sm:p-8",
+            "m-auto w-[calc(100%-2rem)] max-w-md rounded-3xl border border-slate-700 bg-slate-900 p-6 text-slate-100 shadow-2xl shadow-black/50 backdrop:bg-slate-950/80 backdrop:backdrop-blur-sm sm:p-8",
           ),
           event.on("cancel", decode.success(UserCancelledQuizExit)),
           event.on_keydown(UserPressedQuizExitKey),
