@@ -10,7 +10,7 @@ fn init(_arguments: Nil) {
 }
 
 fn update(model: quiz.Model, msg: quiz.Msg) {
-  #(quiz.update(model, msg), effect.none())
+  quiz.update(model, msg)
 }
 
 pub fn main() -> Nil {

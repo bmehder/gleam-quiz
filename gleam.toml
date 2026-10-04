@@ -12,3 +12,7 @@ timetravel = ">= 0.2.2 and < 1.0.0"
 
 [tools.lustre.bin]
 bun = "system"
+
+[tools.lustre.html]
+title = "Quiz Library"
+links = [{ rel = "icon", type = "image/svg+xml", href = "/favicon.svg" }]

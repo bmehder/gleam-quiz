@@ -1,14 +1,17 @@
 //// Browser quiz application and Lustre UI for selecting and taking quizzes.
 
+import gleam/dynamic/decode
 import gleam/int
 import gleam/list
 import lustre
 import lustre/attribute
+import lustre/effect.{type Effect}
 import lustre/element.{type Element}
 import lustre/element/html
 import lustre/event
 import quiz/domain.{type Answer, type Question, type Quiz}
 import quizzes/catalog
+import support/dialog
 
 pub type Model {
   ChoosingQuiz
@@ -61,7 +64,22 @@ fn start_quiz(quiz: Quiz) -> Model {
   }
 }
 
-pub fn update(model: Model, msg: Msg) -> Model {
+pub fn update(model: Model, msg: Msg) -> #(Model, Effect(Msg)) {
+  let next_model = update_model(model, msg)
+  let effect = case model, msg {
+    Answering(_, _, _, _, _), UserClickedChooseQuiz ->
+      dialog.show("quiz-exit-dialog")
+
+    Reviewing(_, _, _, _, _, _), UserClickedChooseQuiz ->
+      dialog.show("quiz-exit-dialog")
+
+    _, _ -> effect.none()
+  }
+
+  #(next_model, effect)
+}
+
+fn update_model(model: Model, msg: Msg) -> Model {
   case model, msg {
     ChoosingQuiz, UserStartedQuiz(quiz) -> start_quiz(quiz)
 
@@ -117,8 +135,8 @@ pub fn update(model: Model, msg: Msg) -> Model {
   }
 }
 
-fn init(_arguments: Nil) -> Model {
-  initial_model()
+fn init(_arguments: Nil) -> #(Model, Effect(Msg)) {
+  #(initial_model(), effect.none())
 }
 
 pub fn view(model: Model) -> Element(Msg) {
@@ -129,7 +147,7 @@ pub fn view(model: Model) -> Element(Msg) {
       ),
     ],
     [
-      html.div(page_attributes(model), [
+      html.div([attribute.class("w-full max-w-3xl")], [
         html.h1(
           [
             attribute.class(
@@ -143,15 +161,6 @@ pub fn view(model: Model) -> Element(Msg) {
       ..view_confirmation(model)
     ],
   )
-}
-
-fn page_attributes(model: Model) {
-  let attributes = [attribute.class("w-full max-w-3xl")]
-
-  case model {
-    ConfirmingQuizExit(_) -> [attribute.attribute("inert", ""), ..attributes]
-    _ -> attributes
-  }
 }
 
 fn view_content(model: Model) -> Element(Msg) {
@@ -183,61 +192,49 @@ fn view_title(model: Model) -> String {
 fn view_confirmation(model: Model) -> List(Element(Msg)) {
   case model {
     ConfirmingQuizExit(_) -> [
-      html.div(
+      html.dialog(
         [
+          attribute.id("quiz-exit-dialog"),
+          attribute.autofocus(True),
+          attribute.tabindex(-1),
+          attribute.aria_labelledby("quiz-exit-title"),
           attribute.class(
-            "fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 px-4 backdrop-blur-sm",
+            "w-[calc(100%-2rem)] max-w-md rounded-3xl border border-slate-700 bg-slate-900 p-6 text-slate-100 shadow-2xl shadow-black/50 backdrop:bg-slate-950/80 backdrop:backdrop-blur-sm sm:p-8",
           ),
+          event.on("cancel", decode.success(UserCancelledQuizExit)),
+          event.on_keydown(UserPressedQuizExitKey),
         ],
         [
-          html.dialog(
+          html.h2(
             [
-              attribute.open(True),
-              attribute.autofocus(True),
-              attribute.tabindex(-1),
-              attribute.aria_modal(True),
-              attribute.aria_labelledby("quiz-exit-title"),
-              attribute.class(
-                "relative m-0 w-full max-w-md rounded-3xl border border-slate-700 bg-slate-900 p-6 text-slate-100 shadow-2xl shadow-black/50 sm:p-8",
-              ),
-              event.on_keydown(UserPressedQuizExitKey),
+              attribute.id("quiz-exit-title"),
+              attribute.class("text-2xl font-semibold text-white"),
             ],
-            [
-              html.h2(
-                [
-                  attribute.id("quiz-exit-title"),
-                  attribute.class("text-2xl font-semibold text-white"),
-                ],
-                [html.text("Leave this quiz?")],
-              ),
-              html.p([attribute.class("mt-3 leading-relaxed text-slate-400")], [
-                html.text("Your progress in this attempt will be lost."),
-              ]),
-              html.div(
-                [attribute.class("mt-7 flex flex-wrap justify-end gap-3")],
-                [
-                  html.button(
-                    [
-                      attribute.class(
-                        "rounded-xl border border-slate-700 bg-slate-800 px-5 py-3 font-semibold text-slate-200 transition hover:border-fuchsia-400 hover:text-white focus:ring-2 focus:ring-fuchsia-400 focus:ring-offset-2 focus:ring-offset-slate-900 focus:outline-none",
-                      ),
-                      event.on_click(UserCancelledQuizExit),
-                    ],
-                    [html.text("Keep going")],
-                  ),
-                  html.button(
-                    [
-                      attribute.class(
-                        "rounded-xl bg-rose-500 px-5 py-3 font-semibold text-white transition hover:bg-rose-400 focus:ring-2 focus:ring-rose-400 focus:ring-offset-2 focus:ring-offset-slate-900 focus:outline-none",
-                      ),
-                      event.on_click(UserConfirmedQuizExit),
-                    ],
-                    [html.text("Leave quiz")],
-                  ),
-                ],
-              ),
-            ],
+            [html.text("Leave this quiz?")],
           ),
+          html.p([attribute.class("mt-3 leading-relaxed text-slate-400")], [
+            html.text("Your progress in this attempt will be lost."),
+          ]),
+          html.div([attribute.class("mt-7 flex flex-wrap justify-end gap-3")], [
+            html.button(
+              [
+                attribute.class(
+                  "rounded-xl border border-slate-700 bg-slate-800 px-5 py-3 font-semibold text-slate-200 transition hover:border-fuchsia-400 hover:text-white focus:ring-2 focus:ring-fuchsia-400 focus:ring-offset-2 focus:ring-offset-slate-900 focus:outline-none",
+                ),
+                event.on_click(UserCancelledQuizExit),
+              ],
+              [html.text("Keep going")],
+            ),
+            html.button(
+              [
+                attribute.class(
+                  "rounded-xl bg-rose-500 px-5 py-3 font-semibold text-white transition hover:bg-rose-400 focus:ring-2 focus:ring-rose-400 focus:ring-offset-2 focus:ring-offset-slate-900 focus:outline-none",
+                ),
+                event.on_click(UserConfirmedQuizExit),
+              ],
+              [html.text("Leave quiz")],
+            ),
+          ]),
         ],
       ),
     ]
@@ -487,7 +484,7 @@ fn view_finished(quiz: Quiz, score: Int, total: Int) -> Element(Msg) {
 }
 
 pub fn main() -> Nil {
-  let app = lustre.simple(init, update, view)
+  let app = lustre.application(init, update, view)
   let assert Ok(_) = lustre.start(app, "#app", Nil)
 
   Nil
