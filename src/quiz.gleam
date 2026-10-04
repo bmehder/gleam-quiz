@@ -31,7 +31,7 @@ pub type Model {
 pub type Msg {
   UserStartedQuiz(Quiz)
   UserSelectedAnswer(Answer)
-  UserClickedNext
+  UserClickedNextQuestion
   UserClickedRestartQuiz
   UserClickedChooseQuiz
 }
@@ -78,7 +78,7 @@ pub fn update(model: Model, msg: Msg) -> Model {
     }
 
     Reviewing(quiz, _, [next, ..rest], _, score, answered_count),
-      UserClickedNext
+      UserClickedNextQuestion
     ->
       Answering(
         quiz: quiz,
@@ -88,7 +88,7 @@ pub fn update(model: Model, msg: Msg) -> Model {
         answered_count: answered_count,
       )
 
-    Reviewing(quiz, _, [], _, score, answered_count), UserClickedNext ->
+    Reviewing(quiz, _, [], _, score, answered_count), UserClickedNextQuestion ->
       Finished(quiz: quiz, score: score, total: answered_count)
 
     Finished(quiz, _, _), UserClickedRestartQuiz -> start_quiz(quiz)
@@ -287,7 +287,7 @@ fn view_reviewing(
           attribute.class(
             "rounded-xl bg-fuchsia-500 px-5 py-3 font-semibold text-white transition hover:bg-fuchsia-400 focus:ring-2 focus:ring-fuchsia-400 focus:ring-offset-2 focus:ring-offset-slate-900 focus:outline-none",
           ),
-          event.on_click(UserClickedNext),
+          event.on_click(UserClickedNextQuestion),
         ],
         [html.text(next_label)],
       ),
