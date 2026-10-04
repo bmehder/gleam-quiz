@@ -39,6 +39,7 @@ pub type Msg {
   UserClickedChooseQuiz
   UserConfirmedQuizExit
   UserCancelledQuizExit
+  UserPressedQuizExitKey(String)
 }
 
 pub fn initial_model() -> Model {
@@ -109,6 +110,8 @@ pub fn update(model: Model, msg: Msg) -> Model {
     ConfirmingQuizExit(_), UserConfirmedQuizExit -> ChoosingQuiz
 
     ConfirmingQuizExit(previous), UserCancelledQuizExit -> previous
+
+    ConfirmingQuizExit(previous), UserPressedQuizExitKey("Escape") -> previous
 
     _, _ -> model
   }
@@ -190,11 +193,14 @@ fn view_confirmation(model: Model) -> List(Element(Msg)) {
           html.dialog(
             [
               attribute.open(True),
+              attribute.autofocus(True),
+              attribute.tabindex(-1),
               attribute.aria_modal(True),
               attribute.aria_labelledby("quiz-exit-title"),
               attribute.class(
-                "m-0 w-full max-w-md rounded-3xl border border-slate-700 bg-slate-900 p-6 text-slate-100 shadow-2xl shadow-black/50 sm:p-8",
+                "relative m-0 w-full max-w-md rounded-3xl border border-slate-700 bg-slate-900 p-6 text-slate-100 shadow-2xl shadow-black/50 sm:p-8",
               ),
+              event.on_keydown(UserPressedQuizExitKey),
             ],
             [
               html.h2(
@@ -212,7 +218,6 @@ fn view_confirmation(model: Model) -> List(Element(Msg)) {
                 [
                   html.button(
                     [
-                      attribute.autofocus(True),
                       attribute.class(
                         "rounded-xl border border-slate-700 bg-slate-800 px-5 py-3 font-semibold text-slate-200 transition hover:border-fuchsia-400 hover:text-white focus:ring-2 focus:ring-fuchsia-400 focus:ring-offset-2 focus:ring-offset-slate-900 focus:outline-none",
                       ),
