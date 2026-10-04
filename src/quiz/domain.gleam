@@ -2,6 +2,8 @@
 
 import gleam/list
 
+// TYPES -----------------------------------------------------------------------
+
 pub type Answer {
   Answer(text: String, is_correct: Bool)
 }
@@ -19,6 +21,8 @@ pub type Quiz {
   )
 }
 
+// QUESTION AUTHORING ----------------------------------------------------------
+
 /// Build a question using the authoring convention that the correct answer is
 /// supplied separately from its distractors.
 pub fn question(
@@ -34,6 +38,8 @@ pub fn question(
 
   Question(prompt: prompt, answers: answers, explanation: explanation)
 }
+
+// QUIZ PREPARATION ------------------------------------------------------------
 
 pub fn shuffled_questions(quiz: Quiz) -> List(Question) {
   quiz.questions

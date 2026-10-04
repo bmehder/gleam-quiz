@@ -2,6 +2,8 @@
 
 import quiz/domain.{type Quiz, Quiz}
 
+// QUIZ ------------------------------------------------------------------------
+
 pub fn quiz() -> Quiz {
   Quiz(
     id: "functional-programming",
@@ -10,6 +12,8 @@ pub fn quiz() -> Quiz {
     questions: questions(),
   )
 }
+
+// QUESTIONS -------------------------------------------------------------------
 
 fn questions() {
   [

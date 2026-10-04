@@ -2,6 +2,8 @@
 
 import quiz/domain.{type Question, type Quiz, Answer, Question, Quiz}
 
+// QUIZ ------------------------------------------------------------------------
+
 pub fn quiz() -> Quiz {
   Quiz(
     id: "gleam",
@@ -10,6 +12,8 @@ pub fn quiz() -> Quiz {
     questions: questions(),
   )
 }
+
+// QUESTIONS -------------------------------------------------------------------
 
 /// Return the canonical question bank.
 ///

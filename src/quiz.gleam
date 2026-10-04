@@ -13,6 +13,8 @@ import quiz/domain.{type Answer, type Question, type Quiz}
 import quizzes/catalog
 import support/dialog
 
+// MODEL AND MESSAGES ----------------------------------------------------------
+
 pub type Model {
   ChoosingQuiz
   Answering(
@@ -44,6 +46,8 @@ pub type Msg {
   UserCancelledQuizExit
   UserPressedQuizExitKey(String)
 }
+
+// LUSTRE LIFECYCLE ------------------------------------------------------------
 
 pub fn initial_model() -> Model {
   ChoosingQuiz
@@ -139,6 +143,8 @@ fn init(_arguments: Nil) -> #(Model, Effect(Msg)) {
   #(initial_model(), effect.none())
 }
 
+// VIEWS -----------------------------------------------------------------------
+
 pub fn view(model: Model) -> Element(Msg) {
   html.main(
     [
@@ -162,6 +168,8 @@ pub fn view(model: Model) -> Element(Msg) {
     ],
   )
 }
+
+// VIEW HELPERS ----------------------------------------------------------------
 
 fn view_content(model: Model) -> Element(Msg) {
   case model {
@@ -482,6 +490,8 @@ fn view_finished(quiz: Quiz, score: Int, total: Int) -> Element(Msg) {
     ]),
   ])
 }
+
+// ENTRY POINT -----------------------------------------------------------------
 
 pub fn main() -> Nil {
   let app = lustre.application(init, update, view)
