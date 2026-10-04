@@ -71,11 +71,10 @@ fn start_quiz(quiz: Quiz) -> Model {
 pub fn update(model: Model, msg: Msg) -> #(Model, Effect(Msg)) {
   let next_model = update_model(model, msg)
   let effect = case model, msg {
-    Answering(_, _, _, _, _), UserClickedChooseQuiz ->
-      dialog.show("quiz-exit-dialog")
+    Answering(_, _, _, _, _), UserClickedChooseQuiz -> dialog.show_quiz_exit()
 
     Reviewing(_, _, _, _, _, _), UserClickedChooseQuiz ->
-      dialog.show("quiz-exit-dialog")
+      dialog.show_quiz_exit()
 
     _, _ -> effect.none()
   }

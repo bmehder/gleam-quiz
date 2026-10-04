@@ -13,6 +13,12 @@ gleam run -m lustre/dev start
 
 Then open <http://localhost:1234>.
 
+Check the question banks for answer-length bias with:
+
+```sh
+node scripts/check_answer_length_bias.mjs
+```
+
 ## Time travel
 
 Run the development-only entry point to add the time-travel inspector:

@@ -21,7 +21,7 @@ fn questions() {
       prompt: "What makes a function pure?",
       correct: "Its result depends only on its inputs and it has no observable side effects",
       incorrect: [
-        "It contains no local variables",
+        "It uses only local variables and never calls another function",
         "It accepts exactly one argument",
         "It is shorter than ten lines",
       ],
@@ -31,7 +31,7 @@ fn questions() {
       prompt: "What does referential transparency allow you to do?",
       correct: "Replace an expression with its value without changing program behaviour",
       incorrect: [
-        "Replace every function with a global variable",
+        "Replace an expression with any other expression that has the same type",
         "Skip type checking for an expression",
         "Mutate a value through any reference",
       ],
@@ -41,7 +41,7 @@ fn questions() {
       prompt: "What is the practical meaning of immutable data?",
       correct: "Existing values are not changed; updated versions are new values",
       incorrect: [
-        "Values can never be stored",
+        "Existing values stay fixed while their fields are updated in place",
         "Every value must be a constant literal",
         "Memory can never be reused internally",
       ],
@@ -51,7 +51,7 @@ fn questions() {
       prompt: "What does it mean for functions to be first-class values?",
       correct: "They can be stored, passed as arguments, and returned like other values",
       incorrect: [
-        "They always execute before data is created",
+        "They must be declared at module level before being passed around",
         "They must be declared at the top of a file",
         "They cannot capture surrounding values",
       ],
@@ -61,7 +61,7 @@ fn questions() {
       prompt: "What is a higher-order function?",
       correct: "A function that accepts or returns another function",
       incorrect: [
-        "A function with more than five parameters",
+        "A function whose parameters must all be other functions",
         "A function that runs with elevated permissions",
         "A recursive function with no base case",
       ],
@@ -71,7 +71,7 @@ fn questions() {
       prompt: "What operation does map express?",
       correct: "Transform every element while preserving the collection's shape",
       incorrect: [
-        "Keep only elements matching a predicate",
+        "Transform selected elements and discard the collection's original shape",
         "Combine all elements into one value",
         "Reorder elements randomly",
       ],
@@ -81,7 +81,7 @@ fn questions() {
       prompt: "What operation does filter express?",
       correct: "Keep the elements for which a predicate succeeds",
       incorrect: [
-        "Transform every element into a new type",
+        "Transform every element before testing whether the new value should remain",
         "Combine all elements into an accumulator",
         "Return only the final element",
       ],
@@ -91,7 +91,7 @@ fn questions() {
       prompt: "What operation does fold express?",
       correct: "Process a collection into an accumulated result",
       incorrect: [
-        "Duplicate every element",
+        "Process each element independently while preserving the collection",
         "Make a collection mutable",
         "Run a predicate without producing a value",
       ],
@@ -101,7 +101,7 @@ fn questions() {
       prompt: "Why does a fold usually take an initial accumulator?",
       correct: "It defines the starting result and handles an empty collection",
       incorrect: [
-        "It forces the collection to be sorted",
+        "It fixes the accumulator's value so later elements cannot change it",
         "It enables mutation of the first element",
         "It determines the collection's element type at runtime",
       ],
@@ -111,7 +111,7 @@ fn questions() {
       prompt: "What is the essential role of a recursive function's base case?",
       correct: "It provides a result without making another recursive call",
       incorrect: [
-        "It mutates the recursion counter",
+        "It resets the function's arguments before making another recursive call",
         "It catches every possible exception",
         "It runs only after the program exits",
       ],
@@ -121,7 +121,7 @@ fn questions() {
       prompt: "When is recursion tail-recursive?",
       correct: "When the recursive call is the function's final operation",
       incorrect: [
-        "When it processes a linked list",
+        "When every recursive branch makes at least two additional function calls",
         "When it calls itself more than once",
         "When its result is a Boolean",
       ],
@@ -131,7 +131,7 @@ fn questions() {
       prompt: "What does pattern matching combine particularly well?",
       correct: "Checking data's shape and binding the parts you need",
       incorrect: [
-        "Mutating data and suppressing errors",
+        "Checking data's type and converting every field into a mutable value",
         "Downloading data and caching files",
         "Sorting data and changing its type",
       ],
@@ -141,7 +141,7 @@ fn questions() {
       prompt: "Why are algebraic data types useful in everyday application code?",
       correct: "They model a closed set of meaningful data shapes",
       incorrect: [
-        "They automatically persist data to a database",
+        "They automatically derive storage and network behaviour for every data shape",
         "They eliminate the need for functions",
         "They make all values interchangeable",
       ],
@@ -151,7 +151,7 @@ fn questions() {
       prompt: "What problem does an Option type solve?",
       correct: "Representing that a value may be present or absent",
       incorrect: [
-        "Representing several detailed failure reasons",
+        "Representing several distinct failure reasons alongside a successful value",
         "Running an operation asynchronously",
         "Storing values in insertion order",
       ],
@@ -161,7 +161,7 @@ fn questions() {
       prompt: "When is Result usually preferable to Option?",
       correct: "When callers benefit from information about why an operation failed",
       incorrect: [
-        "When failure is impossible",
+        "When callers only need to know whether a value is present or absent",
         "When a function returns no value",
         "When values need to be mutable",
       ],
@@ -171,7 +171,7 @@ fn questions() {
       prompt: "What is function composition?",
       correct: "Building a function by connecting the output of one function to another",
       incorrect: [
-        "Putting every function in one source file",
+        "Combining unrelated functions so that they execute at the same time",
         "Running unrelated functions simultaneously",
         "Changing a function's arguments after it returns",
       ],
@@ -181,7 +181,7 @@ fn questions() {
       prompt: "What is the main readability benefit of a pipeline?",
       correct: "It presents a sequence of transformations in data-flow order",
       incorrect: [
-        "It makes every operation lazy",
+        "It guarantees that every transformation is lazy and evaluated only once",
         "It automatically handles every error",
         "It changes immutable data into mutable data",
       ],
@@ -191,7 +191,7 @@ fn questions() {
       prompt: "What is a closure?",
       correct: "A function together with values captured from its surrounding scope",
       incorrect: [
-        "A function that immediately terminates the process",
+        "A function that releases every value from its surrounding scope when called",
         "A data structure that cannot be inspected",
         "The final expression in a module",
       ],
@@ -201,7 +201,7 @@ fn questions() {
       prompt: "What does partial application produce?",
       correct: "A new function with some arguments already supplied",
       incorrect: [
-        "A partially computed value that cannot finish",
+        "A partially evaluated result that cannot accept any more arguments",
         "A function with no type",
         "A mutable copy of the original function",
       ],
@@ -211,7 +211,7 @@ fn questions() {
       prompt: "What is currying?",
       correct: "Representing a multi-argument function as nested one-argument functions",
       incorrect: [
-        "Caching every function result",
+        "Combining several one-argument functions into one mutable procedure",
         "Converting a function into a string",
         "Calling a function with named arguments",
       ],
@@ -231,7 +231,7 @@ fn questions() {
       prompt: "What is a persistent data structure?",
       correct: "An immutable structure whose older versions remain available after updates",
       incorrect: [
-        "A structure permanently stored on disk",
+        "A structure that permanently stores every historical version on disk",
         "A mutable structure shared by every thread",
         "A collection that can never be garbage-collected",
       ],
@@ -241,7 +241,7 @@ fn questions() {
       prompt: "How does immutability help concurrent programs?",
       correct: "Shared immutable values cannot suffer data races from writes",
       incorrect: [
-        "It guarantees that all operations run in parallel",
+        "Shared values automatically coordinate the order of all concurrent operations",
         "It prevents processes from sending messages",
         "It removes every possible concurrency bug",
       ],
@@ -251,7 +251,7 @@ fn questions() {
       prompt: "How do functional programs typically handle unavoidable side effects?",
       correct: "Keep them at explicit boundaries around a mostly pure core",
       incorrect: [
-        "Pretend that input and output are pure",
+        "Treat every effect as pure once it has been wrapped in an anonymous function",
         "Ban all interaction with the outside world",
         "Place effects randomly throughout domain logic",
       ],
@@ -261,7 +261,7 @@ fn questions() {
       prompt: "Why is hidden global state difficult to reason about?",
       correct: "A function's behaviour can depend on changes not visible in its inputs",
       incorrect: [
-        "Global values cannot have types",
+        "A function can read global values but cannot include them in its return type",
         "It forces every function to be recursive",
         "It makes source files immutable",
       ],
@@ -271,7 +271,7 @@ fn questions() {
       prompt: "Why are pure functions usually straightforward to unit test?",
       correct: "Tests can supply inputs and compare outputs without arranging external state",
       incorrect: [
-        "Pure functions never contain bugs",
+        "Tests can skip arranging inputs because pure functions always produce valid values",
         "They do not need test inputs",
         "Their results are always Boolean",
       ],
@@ -281,7 +281,7 @@ fn questions() {
       prompt: "What is property-based testing well suited to checking?",
       correct: "General invariants across many generated inputs",
       incorrect: [
-        "Only one manually chosen example",
+        "One carefully selected example with every external dependency mocked",
         "The colour of rendered buttons",
         "Whether a function has comments",
       ],
@@ -301,7 +301,7 @@ fn questions() {
       prompt: "What is a state transition function?",
       correct: "A function that derives a new state from an old state and an event",
       incorrect: [
-        "A procedure that mutates every reachable object",
+        "A procedure that updates the existing state and then records the event",
         "A function that can only return the old state",
         "A database table containing application logs",
       ],
@@ -311,7 +311,7 @@ fn questions() {
       prompt: "Why is modelling an event separately from state useful?",
       correct: "It records what happened independently of the resulting state",
       incorrect: [
-        "It guarantees the event came from a browser",
+        "It guarantees that every event was produced by the current application state",
         "It makes state untyped",
         "It allows events to mutate earlier states",
       ],
@@ -321,7 +321,7 @@ fn questions() {
       prompt: "What does expression-oriented programming encourage?",
       correct: "Constructs that evaluate to values and can be composed",
       incorrect: [
-        "Statements that always mutate global state",
+        "Statements that perform actions without producing values for other expressions",
         "Functions that cannot return data",
         "Branches with unrelated result types",
       ],
@@ -331,7 +331,7 @@ fn questions() {
       prompt: "What does declarative code emphasise?",
       correct: "What result is wanted more than step-by-step machine instructions",
       incorrect: [
-        "Avoiding all function calls",
+        "The precise sequence of assignments the machine must perform to get a result",
         "Writing only comments and type signatures",
         "Changing variables as often as possible",
       ],
@@ -341,7 +341,7 @@ fn questions() {
       prompt: "What is a total function?",
       correct: "A function defined for every value in its declared input domain",
       incorrect: [
-        "A function that only adds numbers",
+        "A function that combines every supplied argument into one numeric result",
         "A function that returns several values",
         "A function with access to all global state",
       ],
@@ -351,7 +351,7 @@ fn questions() {
       prompt: "How can a type help turn a partial operation into a total one?",
       correct: "Represent failure explicitly with a type such as Option or Result",
       incorrect: [
-        "Hide invalid inputs from the documentation",
+        "Exclude invalid inputs from documentation while keeping the implementation unchanged",
         "Return an arbitrary value for every failure",
         "Use mutation to retry forever",
       ],
@@ -371,7 +371,7 @@ fn questions() {
       prompt: "What does 'make illegal states unrepresentable' mean?",
       correct: "Design types so invalid combinations cannot be constructed normally",
       incorrect: [
-        "Remove validation from every system boundary",
+        "Remove boundary validation because invalid external data can no longer exist",
         "Store invalid values in hidden global variables",
         "Treat every field as an optional string",
       ],
@@ -381,7 +381,7 @@ fn questions() {
       prompt: "What is a combinator in practical functional code?",
       correct: "A function that builds or combines behaviour from other functions or values",
       incorrect: [
-        "A compiler that merges source files",
+        "A function that combines source modules before their individual functions run",
         "A loop that mutates its collection",
         "A global registry of callbacks",
       ],
@@ -401,7 +401,7 @@ fn questions() {
       prompt: "What is a common advantage of parsing data into domain types early?",
       correct: "Later code can operate on validated structure instead of repeatedly checking raw input",
       incorrect: [
-        "The original input becomes mutable",
+        "Later code can reuse the raw input without checking whether parsing succeeded",
         "Every parse is guaranteed to succeed",
         "Domain types no longer need constructors",
       ],
@@ -411,7 +411,7 @@ fn questions() {
       prompt: "What is the difference between fail-fast and accumulating validation?",
       correct: "Fail-fast stops at one error; accumulating validation collects independent errors",
       incorrect: [
-        "Fail-fast is pure while accumulation is always impure",
+        "Fail-fast handles typed errors while accumulation handles only string errors",
         "Accumulation ignores every error",
         "They differ only in function naming",
       ],
@@ -421,7 +421,7 @@ fn questions() {
       prompt: "Why use a structured error type instead of arbitrary strings?",
       correct: "Programs can handle known failure cases safely and consistently",
       incorrect: [
-        "Structured errors can never be displayed",
+        "Structured errors automatically contain a complete message suitable for every user",
         "Strings cannot be returned from functions",
         "It makes failures impossible",
       ],
@@ -431,7 +431,7 @@ fn questions() {
       prompt: "Does functional programming require eliminating all mutation internally?",
       correct: "No; controlled local mutation can be an implementation detail behind a pure interface",
       incorrect: [
-        "Yes; any mutation makes a program non-functional",
+        "Yes; even hidden local mutation changes the observable meaning of every pure interface",
         "No; hidden global mutation is always harmless",
         "Yes; computers running functional code cannot change memory",
       ],

@@ -1,5 +1,7 @@
-export function showModal(id) {
-  const dialog = document.getElementById(id);
+const quizExitDialogId = "quiz-exit-dialog";
+
+export function showQuizExit() {
+  const dialog = document.getElementById(quizExitDialogId);
 
   if (dialog instanceof HTMLDialogElement && !dialog.open) {
     dialog.showModal();
