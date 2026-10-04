@@ -1,3 +1,5 @@
+//// Development entry point with time-travel model inspection.
+
 import lustre
 import lustre/effect
 import quiz

@@ -1,3 +1,5 @@
+//// Reusable quiz domain types and question preparation.
+
 import gleam/list
 
 pub type Answer {

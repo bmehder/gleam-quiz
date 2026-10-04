@@ -1,3 +1,5 @@
+//// Browser quiz application and Lustre UI for selecting and taking quizzes.
+
 import gleam/int
 import gleam/list
 import lustre

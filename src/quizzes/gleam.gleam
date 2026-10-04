@@ -1,3 +1,5 @@
+//// Gleam language, ecosystem, and Lustre quiz content.
+
 import quiz/domain.{type Question, type Quiz, Answer, Question, Quiz}
 
 pub fn quiz() -> Quiz {

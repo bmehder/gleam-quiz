@@ -1,3 +1,5 @@
+//// Practical functional programming quiz content.
+
 import quiz/domain.{type Quiz, Quiz}
 
 pub fn quiz() -> Quiz {
