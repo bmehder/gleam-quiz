@@ -1,31 +1,127 @@
-# Gleam Quiz
+# Quiz Library
 
-A deliberately small client-side quiz application for learning Gleam with
-[Lustre](https://lustre.build/).
+A client-side quiz application built with [Gleam](https://gleam.run/) and
+[Lustre](https://lustre.build/). It currently includes a 100-question Gleam
+quiz and a 42-question practical Functional Programming quiz.
+
+[Take the quizzes](https://gleam-quiz.vercel.app) ·
+[View the source](https://github.com/bmehder/gleam-quiz)
+
+## Features
+
+- A catalogue for selecting between independent quizzes
+- Random question order on every attempt
+- Random answer order while keeping quiz authoring predictable
+- Immediate answer review with an explanation
+- Progress tracking, final scores, and quiz restarts
+- Native browser confirmation before abandoning an attempt
+- A dark, responsive Tailwind CSS interface
+- Development-only time-travel debugging
+
+## How it is organised
+
+The quiz engine and quiz content are deliberately separate:
+
+```text
+src/
+├── quiz.gleam                         # Lustre application and interface
+├── quiz/
+│   └── domain.gleam                  # Quiz, Question, and Answer types
+├── quizzes/
+│   ├── catalog.gleam                 # Available quizzes
+│   ├── gleam.gleam                   # 100 Gleam questions
+│   └── functional_programming.gleam  # 42 FP questions
+└── support/
+    ├── dialog.gleam                  # Managed native-dialog effect
+    └── dialog_ffi.mjs                # Small browser API boundary
+```
+
+`quiz.gleam` owns the Model–View–Update lifecycle. The domain module contains
+reusable quiz types and preparation functions, while each module under
+`src/quizzes/` contains only quiz metadata and questions.
+
+## Question authoring
+
+Quiz authors supply the correct answer first. Before an attempt begins, the app
+shuffles both the question list and each question's answers, so the source order
+never reveals the answer to the player.
+
+The `quiz/domain.question` helper provides a compact format for new question
+banks:
+
+```gleam
+domain.question(
+  prompt: "What makes a function pure?",
+  correct: "It is deterministic and has no observable side effects",
+  incorrect: [
+    "It contains no local variables",
+    "It accepts exactly one argument",
+    "It is shorter than ten lines",
+  ],
+  explanation: "A pure function depends only on its inputs and does not change observable external state.",
+)
+```
+
+Add new quizzes to `src/quizzes/` and register them in
+`src/quizzes/catalog.gleam`.
 
 ## Development
 
-With [Bun](https://bun.sh/) installed:
+Install [Gleam](https://gleam.run/getting-started/installing/) and
+[Bun](https://bun.sh/), then start Lustre's development server:
 
 ```sh
 gleam run -m lustre/dev start
 ```
 
-Then open <http://localhost:1234>.
+Open <http://localhost:1234>. The server watches the source and reloads the
+browser after changes.
 
-Check the question banks for answer-length bias with:
+### Checks
+
+Compile the project:
+
+```sh
+gleam check
+```
+
+Check formatting:
+
+```sh
+gleam format --check src dev
+```
+
+Check both question banks for structural errors and answer-length bias:
 
 ```sh
 node scripts/check_answer_length_bias.mjs
 ```
 
-## Time travel
+The content check verifies that every question has four choices, exactly one
+correct answer, and that correct answers are not disproportionately the longest
+choice.
 
-Run the development-only entry point to add the time-travel inspector:
+### Time travel
+
+Run the development entry point to add the
+[timetravel](https://hex.pm/packages/timetravel) inspector:
 
 ```sh
 gleam run -m lustre/dev start quiz_dev
 ```
 
 Answer some questions, then open **Time Travel** in the lower-right corner to
-inspect and revisit earlier model states.
+inspect messages, revisit earlier models, and return to the present state.
+
+## Production build
+
+Create the static site in `dist/`:
+
+```sh
+gleam run -m lustre/dev build
+```
+
+The output contains the bundled JavaScript, compiled Tailwind stylesheet,
+generated HTML, and static assets. Production is hosted on Vercel and deployed
+manually from this build, so a GitHub push does not automatically publish the
+site.
