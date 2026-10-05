@@ -44,6 +44,9 @@ test/
 `quiz.gleam` owns the Model–View–Update lifecycle. Its `QuizAttempt` type holds
 the state shared by the `Answering` and `Reviewing` phases, while the model's
 variants ensure that only the reviewing phase can contain a selected answer.
+Question numbers and totals are derived from the quiz and its remaining
+questions instead of being stored as additional, potentially inconsistent
+state.
 The domain module contains reusable quiz types and preparation functions, while
 each module under `src/quizzes/` contains only quiz metadata and questions.
 

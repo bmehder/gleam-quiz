@@ -59,7 +59,7 @@ pub fn selecting_a_correct_answer_increments_the_score_test() {
 
   model
   |> should.equal(quiz.Reviewing(
-    attempt: quiz.QuizAttempt(..attempt, score: 3, answered_count: 1),
+    attempt: quiz.QuizAttempt(..attempt, score: 3),
     selected_answer: correct,
   ))
 }
@@ -75,9 +75,49 @@ pub fn selecting_an_incorrect_answer_preserves_the_score_test() {
 
   model
   |> should.equal(quiz.Reviewing(
-    attempt: quiz.QuizAttempt(..attempt, score: 2, answered_count: 1),
+    attempt: quiz.QuizAttempt(..attempt, score: 2),
     selected_answer: incorrect,
   ))
+}
+
+pub fn moving_to_the_next_question_preserves_the_attempt_test() {
+  let next_question = sample_question()
+  let attempt =
+    quiz.QuizAttempt(..sample_attempt(score: 2), remaining_questions: [
+      next_question,
+    ])
+  let #(model, _) =
+    quiz.update(
+      quiz.Reviewing(
+        attempt: attempt,
+        selected_answer: Answer("Correct", Correct),
+      ),
+      quiz.UserClickedNextQuestion,
+    )
+
+  model
+  |> should.equal(quiz.Answering(
+    attempt: quiz.QuizAttempt(
+      ..attempt,
+      current_question: next_question,
+      remaining_questions: [],
+    ),
+  ))
+}
+
+pub fn completing_the_final_question_keeps_only_quiz_and_score_test() {
+  let attempt = sample_attempt(score: 2)
+  let #(model, _) =
+    quiz.update(
+      quiz.Reviewing(
+        attempt: attempt,
+        selected_answer: Answer("Correct", Correct),
+      ),
+      quiz.UserClickedNextQuestion,
+    )
+
+  model
+  |> should.equal(quiz.Finished(quiz: attempt.quiz, score: attempt.score))
 }
 
 // HELPERS ---------------------------------------------------------------------
@@ -88,7 +128,6 @@ fn sample_attempt(score score: Int) -> quiz.QuizAttempt {
     current_question: sample_question(),
     remaining_questions: [],
     score: score,
-    answered_count: 0,
   )
 }
 
