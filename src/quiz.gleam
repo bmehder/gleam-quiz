@@ -29,7 +29,7 @@ pub type Model {
   ChoosingQuiz
   Answering(attempt: QuizAttempt)
   Reviewing(attempt: QuizAttempt, selected_answer: Answer)
-  ConfirmingQuizExit(previous: Model)
+  ConfirmingQuizExit(model: Model)
   Finished(quiz: Quiz, score: Int)
 }
 
@@ -102,18 +102,17 @@ fn update_model(model: Model, msg: Msg) -> Model {
 
     Finished(quiz, _), UserClickedRestartQuiz -> start_quiz(quiz)
 
-    Answering(_), UserClickedChooseQuiz -> ConfirmingQuizExit(previous: model)
+    Answering(_), UserClickedChooseQuiz -> ConfirmingQuizExit(model: model)
 
-    Reviewing(_, _), UserClickedChooseQuiz ->
-      ConfirmingQuizExit(previous: model)
+    Reviewing(_, _), UserClickedChooseQuiz -> ConfirmingQuizExit(model: model)
 
     Finished(_, _), UserClickedChooseQuiz -> ChoosingQuiz
 
     ConfirmingQuizExit(_), UserConfirmedQuizExit -> ChoosingQuiz
 
-    ConfirmingQuizExit(previous), UserCancelledQuizExit -> previous
+    ConfirmingQuizExit(model), UserCancelledQuizExit -> model
 
-    ConfirmingQuizExit(previous), UserPressedQuizExitKey("Escape") -> previous
+    ConfirmingQuizExit(model), UserPressedQuizExitKey("Escape") -> model
 
     _, _ -> model
   }
@@ -200,7 +199,7 @@ fn view_content(model: Model) -> Element(Msg) {
     Reviewing(attempt, selected_answer) ->
       view_reviewing(attempt, selected_answer)
 
-    ConfirmingQuizExit(previous) -> view_content(previous)
+    ConfirmingQuizExit(model) -> view_content(model)
 
     Finished(quiz, score) -> view_finished(quiz, score)
   }
@@ -211,7 +210,7 @@ fn view_title(model: Model) -> String {
     ChoosingQuiz -> "Quiz Library"
     Answering(attempt) -> attempt.quiz.title <> " Quiz"
     Reviewing(attempt, _) -> attempt.quiz.title <> " Quiz"
-    ConfirmingQuizExit(previous) -> view_title(previous)
+    ConfirmingQuizExit(model) -> view_title(model)
     Finished(quiz, _) -> quiz.title <> " Quiz"
   }
 }
