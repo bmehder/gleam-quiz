@@ -16,23 +16,20 @@ import support/dialog
 
 // MODEL AND MESSAGES ----------------------------------------------------------
 
+pub type QuizProgress {
+  QuizProgress(
+    quiz: Quiz,
+    current: Question,
+    remaining: List(Question),
+    score: Int,
+    answered_count: Int,
+  )
+}
+
 pub type Model {
   ChoosingQuiz
-  Answering(
-    quiz: Quiz,
-    current: Question,
-    remaining: List(Question),
-    score: Int,
-    answered_count: Int,
-  )
-  Reviewing(
-    quiz: Quiz,
-    current: Question,
-    remaining: List(Question),
-    selected: Answer,
-    score: Int,
-    answered_count: Int,
-  )
+  Answering(QuizProgress)
+  Reviewing(progress: QuizProgress, selected: Answer)
   ConfirmingQuizExit(previous: Model)
   Finished(quiz: Quiz, score: Int, total: Int)
 }
@@ -56,14 +53,7 @@ pub fn initial_model() -> Model {
 
 fn start_quiz(quiz: Quiz) -> Model {
   case domain.shuffled_questions(quiz) {
-    [first, ..rest] ->
-      Answering(
-        quiz: quiz,
-        current: first,
-        remaining: rest,
-        score: 0,
-        answered_count: 0,
-      )
+    [first, ..rest] -> Answering(QuizProgress(quiz, first, rest, 0, 0))
 
     [] -> Finished(quiz: quiz, score: 0, total: 0)
   }
@@ -72,10 +62,9 @@ fn start_quiz(quiz: Quiz) -> Model {
 pub fn update(model: Model, msg: Msg) -> #(Model, Effect(Msg)) {
   let next_model = update_model(model, msg)
   let effect = case model, msg {
-    Answering(_, _, _, _, _), UserClickedChooseQuiz -> dialog.show_quiz_exit()
+    Answering(_), UserClickedChooseQuiz -> dialog.show_quiz_exit()
 
-    Reviewing(_, _, _, _, _, _), UserClickedChooseQuiz ->
-      dialog.show_quiz_exit()
+    Reviewing(_, _), UserClickedChooseQuiz -> dialog.show_quiz_exit()
 
     _, _ -> effect.none()
   }
@@ -87,44 +76,42 @@ fn update_model(model: Model, msg: Msg) -> Model {
   case model, msg {
     ChoosingQuiz, UserStartedQuiz(quiz) -> start_quiz(quiz)
 
-    Answering(quiz, current, remaining, score, answered_count),
-      UserSelectedAnswer(answer)
-    -> {
+    Answering(progress), UserSelectedAnswer(answer) -> {
       let new_score = case answer.is_correct {
-        True -> score + 1
-        False -> score
+        True -> progress.score + 1
+        False -> progress.score
       }
 
       Reviewing(
-        quiz: quiz,
-        current: current,
-        remaining: remaining,
+        progress: QuizProgress(
+          ..progress,
+          score: new_score,
+          answered_count: progress.answered_count + 1,
+        ),
         selected: answer,
-        score: new_score,
-        answered_count: answered_count + 1,
       )
     }
 
-    Reviewing(quiz, _, [next, ..rest], _, score, answered_count),
+    Reviewing(QuizProgress(quiz, _, [next, ..rest], score, answered_count), _),
       UserClickedNextQuestion
     ->
-      Answering(
+      Answering(QuizProgress(
         quiz: quiz,
         current: next,
         remaining: rest,
         score: score,
         answered_count: answered_count,
-      )
+      ))
 
-    Reviewing(quiz, _, [], _, score, answered_count), UserClickedNextQuestion ->
-      Finished(quiz: quiz, score: score, total: answered_count)
+    Reviewing(QuizProgress(quiz, _, [], score, answered_count), _),
+      UserClickedNextQuestion
+    -> Finished(quiz: quiz, score: score, total: answered_count)
 
     Finished(quiz, _, _), UserClickedRestartQuiz -> start_quiz(quiz)
 
-    Answering(_, _, _, _, _), UserClickedChooseQuiz ->
-      ConfirmingQuizExit(previous: model)
+    Answering(_), UserClickedChooseQuiz -> ConfirmingQuizExit(previous: model)
 
-    Reviewing(_, _, _, _, _, _), UserClickedChooseQuiz ->
+    Reviewing(_, _), UserClickedChooseQuiz ->
       ConfirmingQuizExit(previous: model)
 
     Finished(_, _, _), UserClickedChooseQuiz -> ChoosingQuiz
@@ -215,11 +202,20 @@ fn view_content(model: Model) -> Element(Msg) {
   case model {
     ChoosingQuiz -> view_quiz_chooser(catalog.all())
 
-    Answering(_, current, remaining, _, answered_count) ->
-      view_answering(current, remaining, answered_count)
+    Answering(progress) ->
+      view_answering(
+        progress.current,
+        progress.remaining,
+        progress.answered_count,
+      )
 
-    Reviewing(_, current, remaining, selected, _, answered_count) ->
-      view_reviewing(current, remaining, selected, answered_count)
+    Reviewing(progress, selected) ->
+      view_reviewing(
+        progress.current,
+        progress.remaining,
+        selected,
+        progress.answered_count,
+      )
 
     ConfirmingQuizExit(previous) -> view_content(previous)
 
@@ -230,8 +226,8 @@ fn view_content(model: Model) -> Element(Msg) {
 fn view_title(model: Model) -> String {
   case model {
     ChoosingQuiz -> "Quiz Library"
-    Answering(quiz, _, _, _, _) -> quiz.title <> " Quiz"
-    Reviewing(quiz, _, _, _, _, _) -> quiz.title <> " Quiz"
+    Answering(progress) -> progress.quiz.title <> " Quiz"
+    Reviewing(progress, _) -> progress.quiz.title <> " Quiz"
     ConfirmingQuizExit(previous) -> view_title(previous)
     Finished(quiz, _, _) -> quiz.title <> " Quiz"
   }

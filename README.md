@@ -34,11 +34,16 @@ src/
 └── support/
     ├── dialog.gleam                  # Managed native-dialog effect
     └── dialog_ffi.mjs                # Small browser API boundary
+dev/
+├── check_answer_length_bias.gleam    # Quiz-content quality check
+└── quiz_dev.gleam                    # Time-travel development entry point
 ```
 
-`quiz.gleam` owns the Model–View–Update lifecycle. The domain module contains
-reusable quiz types and preparation functions, while each module under
-`src/quizzes/` contains only quiz metadata and questions.
+`quiz.gleam` owns the Model–View–Update lifecycle. Its `QuizProgress` type holds
+the state shared by the `Answering` and `Reviewing` phases, while the model's
+variants ensure that only the reviewing phase can contain a selected answer.
+The domain module contains reusable quiz types and preparation functions, while
+each module under `src/quizzes/` contains only quiz metadata and questions.
 
 ## Question authoring
 
@@ -94,12 +99,13 @@ gleam format --check src dev
 Check both question banks for structural errors and answer-length bias:
 
 ```sh
-node scripts/check_answer_length_bias.mjs
+gleam run -m check_answer_length_bias
 ```
 
 The content check verifies that every question has four choices, exactly one
 correct answer, and that correct answers are not disproportionately the longest
-choice.
+choice. It imports the catalogue and checks the same Gleam domain values used by
+the application rather than parsing the question source files.
 
 ### Time travel
 
