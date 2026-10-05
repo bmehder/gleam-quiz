@@ -1,9 +1,7 @@
 //// Browser quiz application and Lustre UI for selecting and taking quizzes.
 
-import gleam/dynamic/decode
 import gleam/int
 import gleam/list
-import gleam/option.{type Option, None, Some}
 import lustre
 import lustre/attribute
 import lustre/effect.{type Effect}
@@ -27,18 +25,10 @@ pub type QuizAttempt {
 }
 
 pub type Model {
-  Model(screen: Screen, dialog: Option(Dialog))
-}
-
-pub type Screen {
   ChoosingQuiz
   Answering(attempt: QuizAttempt)
   Reviewing(attempt: QuizAttempt, selected_answer: Answer)
   Finished(quiz: Quiz, score: Int)
-}
-
-pub type Dialog {
-  QuizExitConfirmation
 }
 
 pub type Msg {
@@ -48,16 +38,15 @@ pub type Msg {
   UserClickedRestartQuiz
   UserClickedChooseQuiz
   UserConfirmedQuizExit
-  UserCancelledQuizExit
 }
 
 // LUSTRE LIFECYCLE ------------------------------------------------------------
 
 pub fn initial_model() -> Model {
-  Model(screen: ChoosingQuiz, dialog: None)
+  ChoosingQuiz
 }
 
-fn start_quiz(quiz: Quiz) -> Screen {
+fn start_quiz(quiz: Quiz) -> Model {
   case domain.shuffled_questions(quiz) {
     [first, ..rest] ->
       Answering(attempt: QuizAttempt(
@@ -73,36 +62,30 @@ fn start_quiz(quiz: Quiz) -> Screen {
 
 pub fn update(model: Model, msg: Msg) -> #(Model, Effect(Msg)) {
   let next_model = update_model(model, msg)
-  let effect = case model.screen, model.dialog, msg {
-    Answering(attempt: _), None, UserClickedChooseQuiz ->
-      dialog.show_quiz_exit()
+  let effect = case model, msg {
+    Answering(attempt: _), UserClickedChooseQuiz
+    | Reviewing(attempt: _, selected_answer: _), UserClickedChooseQuiz
+    -> dialog.show_quiz_exit()
 
-    Reviewing(attempt: _, selected_answer: _), None, UserClickedChooseQuiz ->
-      dialog.show_quiz_exit()
-
-    _, _, _ -> effect.none()
+    _, _ -> effect.none()
   }
 
   #(next_model, effect)
 }
 
 fn update_model(model: Model, msg: Msg) -> Model {
-  case model.screen, model.dialog, msg {
-    ChoosingQuiz, None, UserStartedQuiz(quiz) ->
-      Model(..model, screen: start_quiz(quiz))
+  case model, msg {
+    ChoosingQuiz, UserStartedQuiz(quiz) -> start_quiz(quiz)
 
-    Answering(attempt: attempt), None, UserSelectedAnswer(answer) -> {
+    Answering(attempt: attempt), UserSelectedAnswer(answer) -> {
       let new_score = case answer.correctness {
         Correct -> attempt.score + 1
         Incorrect -> attempt.score
       }
 
-      Model(
-        ..model,
-        screen: Reviewing(
-          attempt: QuizAttempt(..attempt, score: new_score),
-          selected_answer: answer,
-        ),
+      Reviewing(
+        attempt: QuizAttempt(..attempt, score: new_score),
+        selected_answer: answer,
       )
     }
 
@@ -115,18 +98,14 @@ fn update_model(model: Model, msg: Msg) -> Model {
       ),
       selected_answer: _,
     ),
-      None,
       UserClickedNextQuestion
     ->
-      Model(
-        ..model,
-        screen: Answering(attempt: QuizAttempt(
-          quiz: quiz,
-          current_question: next,
-          remaining_questions: rest,
-          score: score,
-        )),
-      )
+      Answering(attempt: QuizAttempt(
+        quiz: quiz,
+        current_question: next,
+        remaining_questions: rest,
+        score: score,
+      ))
 
     Reviewing(
       attempt: QuizAttempt(
@@ -137,29 +116,19 @@ fn update_model(model: Model, msg: Msg) -> Model {
       ),
       selected_answer: _,
     ),
-      None,
       UserClickedNextQuestion
-    -> Model(..model, screen: Finished(quiz: quiz, score: score))
+    -> Finished(quiz: quiz, score: score)
 
-    Finished(quiz: quiz, score: _), None, UserClickedRestartQuiz ->
-      Model(..model, screen: start_quiz(quiz))
+    Finished(quiz: quiz, score: _), UserClickedRestartQuiz -> start_quiz(quiz)
 
-    Answering(attempt: _), None, UserClickedChooseQuiz ->
-      Model(..model, dialog: Some(QuizExitConfirmation))
+    Answering(attempt: _), UserConfirmedQuizExit -> ChoosingQuiz
 
-    Reviewing(attempt: _, selected_answer: _), None, UserClickedChooseQuiz ->
-      Model(..model, dialog: Some(QuizExitConfirmation))
+    Reviewing(attempt: _, selected_answer: _), UserConfirmedQuizExit ->
+      ChoosingQuiz
 
-    Finished(quiz: _, score: _), None, UserClickedChooseQuiz ->
-      Model(screen: ChoosingQuiz, dialog: None)
+    Finished(quiz: _, score: _), UserClickedChooseQuiz -> ChoosingQuiz
 
-    _, Some(QuizExitConfirmation), UserConfirmedQuizExit ->
-      Model(screen: ChoosingQuiz, dialog: None)
-
-    _, Some(QuizExitConfirmation), UserCancelledQuizExit ->
-      Model(..model, dialog: None)
-
-    _, _, _ -> model
+    _, _ -> model
   }
 }
 
@@ -178,17 +147,17 @@ pub fn view(model: Model) -> Element(Msg) {
     ],
     [
       html.div([attribute.class("w-full max-w-3xl")], [
-        view_header(model.screen),
-        view_content(model.screen),
+        view_header(model),
+        view_content(model),
       ]),
-      ..view_confirmation(model.dialog)
+      view_confirmation(),
     ],
   )
 }
 
 // VIEW HELPERS ----------------------------------------------------------------
 
-fn view_header(screen: Screen) -> Element(Msg) {
+fn view_header(model: Model) -> Element(Msg) {
   html.header(
     [attribute.class("relative mb-6 flex items-center justify-center")],
     [
@@ -198,7 +167,7 @@ fn view_header(screen: Screen) -> Element(Msg) {
             "text-center text-sm font-bold tracking-[0.3em] text-fuchsia-400 uppercase",
           ),
         ],
-        [html.text(view_title(screen))],
+        [html.text(view_title(model))],
       ),
       html.a(
         [
@@ -235,8 +204,8 @@ fn view_github_icon() -> Element(Msg) {
   )
 }
 
-fn view_content(screen: Screen) -> Element(Msg) {
-  case screen {
+fn view_content(model: Model) -> Element(Msg) {
+  case model {
     ChoosingQuiz -> view_quiz_chooser(catalog.all())
 
     Answering(attempt) -> view_answering(attempt)
@@ -248,8 +217,8 @@ fn view_content(screen: Screen) -> Element(Msg) {
   }
 }
 
-fn view_title(screen: Screen) -> String {
-  case screen {
+fn view_title(model: Model) -> String {
+  case model {
     ChoosingQuiz -> "Quiz Library"
     Answering(attempt) -> attempt.quiz.title <> " Quiz"
     Reviewing(attempt, _) -> attempt.quiz.title <> " Quiz"
@@ -257,19 +226,20 @@ fn view_title(screen: Screen) -> String {
   }
 }
 
-fn view_confirmation(dialog: Option(Dialog)) -> List(Element(Msg)) {
-  case dialog {
-    Some(QuizExitConfirmation) -> [
-      html.dialog(
+fn view_confirmation() -> Element(Msg) {
+  html.dialog(
+    [
+      attribute.id("quiz-exit-dialog"),
+      attribute.tabindex(-1),
+      attribute.aria_labelledby("quiz-exit-title"),
+      attribute.class(
+        "m-auto w-[calc(100%-2rem)] max-w-md rounded-3xl border border-slate-700 bg-slate-900 p-6 text-slate-100 shadow-2xl shadow-black/50 backdrop:bg-slate-950/80 backdrop:backdrop-blur-sm sm:p-8",
+      ),
+    ],
+    [
+      html.form(
         [
-          attribute.id("quiz-exit-dialog"),
-          attribute.autofocus(True),
-          attribute.tabindex(-1),
-          attribute.aria_labelledby("quiz-exit-title"),
-          attribute.class(
-            "m-auto w-[calc(100%-2rem)] max-w-md rounded-3xl border border-slate-700 bg-slate-900 p-6 text-slate-100 shadow-2xl shadow-black/50 backdrop:bg-slate-950/80 backdrop:backdrop-blur-sm sm:p-8",
-          ),
-          event.on("cancel", decode.success(UserCancelledQuizExit)),
+          attribute.attribute("method", "dialog"),
         ],
         [
           html.h2(
@@ -288,7 +258,6 @@ fn view_confirmation(dialog: Option(Dialog)) -> List(Element(Msg)) {
                 attribute.class(
                   "rounded-xl border border-slate-700 bg-slate-800 px-5 py-3 font-semibold text-slate-200 transition hover:border-fuchsia-400 hover:text-white focus:ring-2 focus:ring-fuchsia-400 focus:ring-offset-2 focus:ring-offset-slate-900 focus:outline-none",
                 ),
-                event.on_click(UserCancelledQuizExit),
               ],
               [html.text("Keep going")],
             ),
@@ -304,10 +273,8 @@ fn view_confirmation(dialog: Option(Dialog)) -> List(Element(Msg)) {
           ]),
         ],
       ),
-    ]
-
-    None -> []
-  }
+    ],
+  )
 }
 
 fn view_quiz_chooser(quizzes: List(Quiz)) -> Element(Msg) {
