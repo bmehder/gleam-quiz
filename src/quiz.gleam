@@ -49,7 +49,6 @@ pub type Msg {
   UserClickedChooseQuiz
   UserConfirmedQuizExit
   UserCancelledQuizExit
-  UserPressedQuizExitKey(String)
 }
 
 // LUSTRE LIFECYCLE ------------------------------------------------------------
@@ -132,9 +131,6 @@ fn update_model(model: Model, msg: Msg) -> Model {
       Model(screen: ChoosingQuiz, dialog: None)
 
     _, Some(QuizExitConfirmation), UserCancelledQuizExit ->
-      Model(..model, dialog: None)
-
-    _, Some(QuizExitConfirmation), UserPressedQuizExitKey("Escape") ->
       Model(..model, dialog: None)
 
     _, _, _ -> model
@@ -248,7 +244,6 @@ fn view_confirmation(dialog: Option(Dialog)) -> List(Element(Msg)) {
             "m-auto w-[calc(100%-2rem)] max-w-md rounded-3xl border border-slate-700 bg-slate-900 p-6 text-slate-100 shadow-2xl shadow-black/50 backdrop:bg-slate-950/80 backdrop:backdrop-blur-sm sm:p-8",
           ),
           event.on("cancel", decode.success(UserCancelledQuizExit)),
-          event.on_keydown(UserPressedQuizExitKey),
         ],
         [
           html.h2(
