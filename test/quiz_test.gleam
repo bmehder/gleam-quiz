@@ -1,6 +1,7 @@
 //// Tests for quiz-domain construction and application state transitions.
 
 import gleam/list
+import gleam/option.{None, Some}
 import gleeunit
 import gleeunit/should
 import quiz
@@ -134,7 +135,10 @@ pub fn cancelling_exit_confirmation_preserves_the_current_screen_test() {
     quiz.update(model_with_screen(screen), quiz.UserClickedChooseQuiz)
 
   confirming_model
-  |> should.equal(quiz.Model(screen: screen, dialog: quiz.ConfirmingQuizExit))
+  |> should.equal(quiz.Model(
+    screen: screen,
+    dialog: Some(quiz.QuizExitConfirmation),
+  ))
 
   let #(cancelled_model, _) =
     quiz.update(confirming_model, quiz.UserCancelledQuizExit)
@@ -147,7 +151,7 @@ pub fn confirming_quiz_exit_returns_to_the_catalogue_test() {
   let confirming_model =
     quiz.Model(
       screen: quiz.Answering(attempt: sample_attempt(score: 2)),
-      dialog: quiz.ConfirmingQuizExit,
+      dialog: Some(quiz.QuizExitConfirmation),
     )
   let #(model, _) = quiz.update(confirming_model, quiz.UserConfirmedQuizExit)
 
@@ -158,7 +162,7 @@ pub fn confirming_quiz_exit_returns_to_the_catalogue_test() {
 // HELPERS ---------------------------------------------------------------------
 
 fn model_with_screen(screen: quiz.Screen) -> quiz.Model {
-  quiz.Model(screen: screen, dialog: quiz.NoDialog)
+  quiz.Model(screen: screen, dialog: None)
 }
 
 fn sample_attempt(score score: Int) -> quiz.QuizAttempt {
