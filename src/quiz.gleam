@@ -59,7 +59,13 @@ pub fn initial_model() -> Model {
 
 fn start_quiz(quiz: Quiz) -> Screen {
   case domain.shuffled_questions(quiz) {
-    [first, ..rest] -> Answering(attempt: QuizAttempt(quiz, first, rest, 0))
+    [first, ..rest] ->
+      Answering(attempt: QuizAttempt(
+        quiz: quiz,
+        current_question: first,
+        remaining_questions: rest,
+        score: 0,
+      ))
 
     [] -> Finished(quiz: quiz, score: 0)
   }
@@ -68,9 +74,11 @@ fn start_quiz(quiz: Quiz) -> Screen {
 pub fn update(model: Model, msg: Msg) -> #(Model, Effect(Msg)) {
   let next_model = update_model(model, msg)
   let effect = case model.screen, model.dialog, msg {
-    Answering(_), None, UserClickedChooseQuiz -> dialog.show_quiz_exit()
+    Answering(attempt: _), None, UserClickedChooseQuiz ->
+      dialog.show_quiz_exit()
 
-    Reviewing(_, _), None, UserClickedChooseQuiz -> dialog.show_quiz_exit()
+    Reviewing(attempt: _, selected_answer: _), None, UserClickedChooseQuiz ->
+      dialog.show_quiz_exit()
 
     _, _, _ -> effect.none()
   }
@@ -83,7 +91,7 @@ fn update_model(model: Model, msg: Msg) -> Model {
     ChoosingQuiz, None, UserStartedQuiz(quiz) ->
       Model(..model, screen: start_quiz(quiz))
 
-    Answering(attempt), None, UserSelectedAnswer(answer) -> {
+    Answering(attempt: attempt), None, UserSelectedAnswer(answer) -> {
       let new_score = case answer.correctness {
         Correct -> attempt.score + 1
         Incorrect -> attempt.score
@@ -98,7 +106,15 @@ fn update_model(model: Model, msg: Msg) -> Model {
       )
     }
 
-    Reviewing(QuizAttempt(quiz, _, [next, ..rest], score), _),
+    Reviewing(
+      attempt: QuizAttempt(
+        quiz: quiz,
+        current_question: _,
+        remaining_questions: [next, ..rest],
+        score: score,
+      ),
+      selected_answer: _,
+    ),
       None,
       UserClickedNextQuestion
     ->
@@ -112,19 +128,29 @@ fn update_model(model: Model, msg: Msg) -> Model {
         )),
       )
 
-    Reviewing(QuizAttempt(quiz, _, [], score), _), None, UserClickedNextQuestion
+    Reviewing(
+      attempt: QuizAttempt(
+        quiz: quiz,
+        current_question: _,
+        remaining_questions: [],
+        score: score,
+      ),
+      selected_answer: _,
+    ),
+      None,
+      UserClickedNextQuestion
     -> Model(..model, screen: Finished(quiz: quiz, score: score))
 
-    Finished(quiz, _), None, UserClickedRestartQuiz ->
+    Finished(quiz: quiz, score: _), None, UserClickedRestartQuiz ->
       Model(..model, screen: start_quiz(quiz))
 
-    Answering(_), None, UserClickedChooseQuiz ->
+    Answering(attempt: _), None, UserClickedChooseQuiz ->
       Model(..model, dialog: Some(QuizExitConfirmation))
 
-    Reviewing(_, _), None, UserClickedChooseQuiz ->
+    Reviewing(attempt: _, selected_answer: _), None, UserClickedChooseQuiz ->
       Model(..model, dialog: Some(QuizExitConfirmation))
 
-    Finished(_, _), None, UserClickedChooseQuiz ->
+    Finished(quiz: _, score: _), None, UserClickedChooseQuiz ->
       Model(screen: ChoosingQuiz, dialog: None)
 
     _, Some(QuizExitConfirmation), UserConfirmedQuizExit ->
