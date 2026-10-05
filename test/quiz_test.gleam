@@ -53,15 +53,17 @@ pub fn selecting_a_correct_answer_increments_the_score_test() {
   let attempt = sample_attempt(score: 2)
   let #(model, _) =
     quiz.update(
-      quiz.Answering(attempt: attempt),
+      model_with_screen(quiz.Answering(attempt: attempt)),
       quiz.UserSelectedAnswer(correct),
     )
 
   model
-  |> should.equal(quiz.Reviewing(
-    attempt: quiz.QuizAttempt(..attempt, score: 3),
-    selected_answer: correct,
-  ))
+  |> should.equal(
+    model_with_screen(quiz.Reviewing(
+      attempt: quiz.QuizAttempt(..attempt, score: 3),
+      selected_answer: correct,
+    )),
+  )
 }
 
 pub fn selecting_an_incorrect_answer_preserves_the_score_test() {
@@ -69,15 +71,17 @@ pub fn selecting_an_incorrect_answer_preserves_the_score_test() {
   let attempt = sample_attempt(score: 2)
   let #(model, _) =
     quiz.update(
-      quiz.Answering(attempt: attempt),
+      model_with_screen(quiz.Answering(attempt: attempt)),
       quiz.UserSelectedAnswer(incorrect),
     )
 
   model
-  |> should.equal(quiz.Reviewing(
-    attempt: quiz.QuizAttempt(..attempt, score: 2),
-    selected_answer: incorrect,
-  ))
+  |> should.equal(
+    model_with_screen(quiz.Reviewing(
+      attempt: quiz.QuizAttempt(..attempt, score: 2),
+      selected_answer: incorrect,
+    )),
+  )
 }
 
 pub fn moving_to_the_next_question_preserves_the_attempt_test() {
@@ -88,39 +92,74 @@ pub fn moving_to_the_next_question_preserves_the_attempt_test() {
     ])
   let #(model, _) =
     quiz.update(
-      quiz.Reviewing(
+      model_with_screen(quiz.Reviewing(
         attempt: attempt,
         selected_answer: Answer("Correct", Correct),
-      ),
+      )),
       quiz.UserClickedNextQuestion,
     )
 
   model
-  |> should.equal(quiz.Answering(
-    attempt: quiz.QuizAttempt(
-      ..attempt,
-      current_question: next_question,
-      remaining_questions: [],
-    ),
-  ))
+  |> should.equal(
+    model_with_screen(quiz.Answering(
+      attempt: quiz.QuizAttempt(
+        ..attempt,
+        current_question: next_question,
+        remaining_questions: [],
+      ),
+    )),
+  )
 }
 
 pub fn completing_the_final_question_keeps_only_quiz_and_score_test() {
   let attempt = sample_attempt(score: 2)
   let #(model, _) =
     quiz.update(
-      quiz.Reviewing(
+      model_with_screen(quiz.Reviewing(
         attempt: attempt,
         selected_answer: Answer("Correct", Correct),
-      ),
+      )),
       quiz.UserClickedNextQuestion,
     )
 
   model
-  |> should.equal(quiz.Finished(quiz: attempt.quiz, score: attempt.score))
+  |> should.equal(
+    model_with_screen(quiz.Finished(quiz: attempt.quiz, score: attempt.score)),
+  )
+}
+
+pub fn cancelling_exit_confirmation_preserves_the_current_screen_test() {
+  let screen = quiz.Answering(attempt: sample_attempt(score: 2))
+  let #(confirming_model, _) =
+    quiz.update(model_with_screen(screen), quiz.UserClickedChooseQuiz)
+
+  confirming_model
+  |> should.equal(quiz.Model(screen: screen, dialog: quiz.ConfirmingQuizExit))
+
+  let #(cancelled_model, _) =
+    quiz.update(confirming_model, quiz.UserCancelledQuizExit)
+
+  cancelled_model
+  |> should.equal(model_with_screen(screen))
+}
+
+pub fn confirming_quiz_exit_returns_to_the_catalogue_test() {
+  let confirming_model =
+    quiz.Model(
+      screen: quiz.Answering(attempt: sample_attempt(score: 2)),
+      dialog: quiz.ConfirmingQuizExit,
+    )
+  let #(model, _) = quiz.update(confirming_model, quiz.UserConfirmedQuizExit)
+
+  model
+  |> should.equal(quiz.initial_model())
 }
 
 // HELPERS ---------------------------------------------------------------------
+
+fn model_with_screen(screen: quiz.Screen) -> quiz.Model {
+  quiz.Model(screen: screen, dialog: quiz.NoDialog)
+}
 
 fn sample_attempt(score score: Int) -> quiz.QuizAttempt {
   quiz.QuizAttempt(

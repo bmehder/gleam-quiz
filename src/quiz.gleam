@@ -26,11 +26,19 @@ pub type QuizAttempt {
 }
 
 pub type Model {
+  Model(screen: Screen, dialog: Dialog)
+}
+
+pub type Screen {
   ChoosingQuiz
   Answering(attempt: QuizAttempt)
   Reviewing(attempt: QuizAttempt, selected_answer: Answer)
-  ConfirmingQuizExit(model: Model)
   Finished(quiz: Quiz, score: Int)
+}
+
+pub type Dialog {
+  NoDialog
+  ConfirmingQuizExit
 }
 
 pub type Msg {
@@ -47,10 +55,10 @@ pub type Msg {
 // LUSTRE LIFECYCLE ------------------------------------------------------------
 
 pub fn initial_model() -> Model {
-  ChoosingQuiz
+  Model(screen: ChoosingQuiz, dialog: NoDialog)
 }
 
-fn start_quiz(quiz: Quiz) -> Model {
+fn start_quiz(quiz: Quiz) -> Screen {
   case domain.shuffled_questions(quiz) {
     [first, ..rest] -> Answering(attempt: QuizAttempt(quiz, first, rest, 0))
 
@@ -60,61 +68,78 @@ fn start_quiz(quiz: Quiz) -> Model {
 
 pub fn update(model: Model, msg: Msg) -> #(Model, Effect(Msg)) {
   let next_model = update_model(model, msg)
-  let effect = case model, msg {
-    Answering(_), UserClickedChooseQuiz -> dialog.show_quiz_exit()
+  let effect = case model.screen, model.dialog, msg {
+    Answering(_), NoDialog, UserClickedChooseQuiz -> dialog.show_quiz_exit()
 
-    Reviewing(_, _), UserClickedChooseQuiz -> dialog.show_quiz_exit()
+    Reviewing(_, _), NoDialog, UserClickedChooseQuiz -> dialog.show_quiz_exit()
 
-    _, _ -> effect.none()
+    _, _, _ -> effect.none()
   }
 
   #(next_model, effect)
 }
 
 fn update_model(model: Model, msg: Msg) -> Model {
-  case model, msg {
-    ChoosingQuiz, UserStartedQuiz(quiz) -> start_quiz(quiz)
+  case model.screen, model.dialog, msg {
+    ChoosingQuiz, NoDialog, UserStartedQuiz(quiz) ->
+      Model(..model, screen: start_quiz(quiz))
 
-    Answering(attempt), UserSelectedAnswer(answer) -> {
+    Answering(attempt), NoDialog, UserSelectedAnswer(answer) -> {
       let new_score = case answer.correctness {
         Correct -> attempt.score + 1
         Incorrect -> attempt.score
       }
 
-      Reviewing(
-        attempt: QuizAttempt(..attempt, score: new_score),
-        selected_answer: answer,
+      Model(
+        ..model,
+        screen: Reviewing(
+          attempt: QuizAttempt(..attempt, score: new_score),
+          selected_answer: answer,
+        ),
       )
     }
 
     Reviewing(QuizAttempt(quiz, _, [next, ..rest], score), _),
+      NoDialog,
       UserClickedNextQuestion
     ->
-      Answering(attempt: QuizAttempt(
-        quiz: quiz,
-        current_question: next,
-        remaining_questions: rest,
-        score: score,
-      ))
+      Model(
+        ..model,
+        screen: Answering(attempt: QuizAttempt(
+          quiz: quiz,
+          current_question: next,
+          remaining_questions: rest,
+          score: score,
+        )),
+      )
 
-    Reviewing(QuizAttempt(quiz, _, [], score), _), UserClickedNextQuestion ->
-      Finished(quiz: quiz, score: score)
+    Reviewing(QuizAttempt(quiz, _, [], score), _),
+      NoDialog,
+      UserClickedNextQuestion
+    -> Model(..model, screen: Finished(quiz: quiz, score: score))
 
-    Finished(quiz, _), UserClickedRestartQuiz -> start_quiz(quiz)
+    Finished(quiz, _), NoDialog, UserClickedRestartQuiz ->
+      Model(..model, screen: start_quiz(quiz))
 
-    Answering(_), UserClickedChooseQuiz -> ConfirmingQuizExit(model: model)
+    Answering(_), NoDialog, UserClickedChooseQuiz ->
+      Model(..model, dialog: ConfirmingQuizExit)
 
-    Reviewing(_, _), UserClickedChooseQuiz -> ConfirmingQuizExit(model: model)
+    Reviewing(_, _), NoDialog, UserClickedChooseQuiz ->
+      Model(..model, dialog: ConfirmingQuizExit)
 
-    Finished(_, _), UserClickedChooseQuiz -> ChoosingQuiz
+    Finished(_, _), NoDialog, UserClickedChooseQuiz ->
+      Model(screen: ChoosingQuiz, dialog: NoDialog)
 
-    ConfirmingQuizExit(_), UserConfirmedQuizExit -> ChoosingQuiz
+    _, ConfirmingQuizExit, UserConfirmedQuizExit ->
+      Model(screen: ChoosingQuiz, dialog: NoDialog)
 
-    ConfirmingQuizExit(model), UserCancelledQuizExit -> model
+    _, ConfirmingQuizExit, UserCancelledQuizExit ->
+      Model(..model, dialog: NoDialog)
 
-    ConfirmingQuizExit(model), UserPressedQuizExitKey("Escape") -> model
+    _, ConfirmingQuizExit, UserPressedQuizExitKey("Escape") ->
+      Model(..model, dialog: NoDialog)
 
-    _, _ -> model
+    _, _, _ -> model
   }
 }
 
@@ -133,17 +158,17 @@ pub fn view(model: Model) -> Element(Msg) {
     ],
     [
       html.div([attribute.class("w-full max-w-3xl")], [
-        view_header(model),
-        view_content(model),
+        view_header(model.screen),
+        view_content(model.screen),
       ]),
-      ..view_confirmation(model)
+      ..view_confirmation(model.dialog)
     ],
   )
 }
 
 // VIEW HELPERS ----------------------------------------------------------------
 
-fn view_header(model: Model) -> Element(Msg) {
+fn view_header(screen: Screen) -> Element(Msg) {
   html.header(
     [attribute.class("relative mb-6 flex items-center justify-center")],
     [
@@ -153,7 +178,7 @@ fn view_header(model: Model) -> Element(Msg) {
             "text-center text-sm font-bold tracking-[0.3em] text-fuchsia-400 uppercase",
           ),
         ],
-        [html.text(view_title(model))],
+        [html.text(view_title(screen))],
       ),
       html.a(
         [
@@ -190,8 +215,8 @@ fn view_github_icon() -> Element(Msg) {
   )
 }
 
-fn view_content(model: Model) -> Element(Msg) {
-  case model {
+fn view_content(screen: Screen) -> Element(Msg) {
+  case screen {
     ChoosingQuiz -> view_quiz_chooser(catalog.all())
 
     Answering(attempt) -> view_answering(attempt)
@@ -199,25 +224,22 @@ fn view_content(model: Model) -> Element(Msg) {
     Reviewing(attempt, selected_answer) ->
       view_reviewing(attempt, selected_answer)
 
-    ConfirmingQuizExit(model) -> view_content(model)
-
     Finished(quiz, score) -> view_finished(quiz, score)
   }
 }
 
-fn view_title(model: Model) -> String {
-  case model {
+fn view_title(screen: Screen) -> String {
+  case screen {
     ChoosingQuiz -> "Quiz Library"
     Answering(attempt) -> attempt.quiz.title <> " Quiz"
     Reviewing(attempt, _) -> attempt.quiz.title <> " Quiz"
-    ConfirmingQuizExit(model) -> view_title(model)
     Finished(quiz, _) -> quiz.title <> " Quiz"
   }
 }
 
-fn view_confirmation(model: Model) -> List(Element(Msg)) {
-  case model {
-    ConfirmingQuizExit(_) -> [
+fn view_confirmation(dialog: Dialog) -> List(Element(Msg)) {
+  case dialog {
+    ConfirmingQuizExit -> [
       html.dialog(
         [
           attribute.id("quiz-exit-dialog"),
@@ -265,7 +287,7 @@ fn view_confirmation(model: Model) -> List(Element(Msg)) {
       ),
     ]
 
-    _ -> []
+    NoDialog -> []
   }
 }
 

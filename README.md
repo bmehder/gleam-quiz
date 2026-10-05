@@ -41,8 +41,10 @@ test/
 └── quiz_test.gleam                   # Domain and state-transition tests
 ```
 
-`quiz.gleam` owns the Model–View–Update lifecycle. Its `QuizAttempt` type holds
-the state shared by the `Answering` and `Reviewing` phases, while the model's
+`quiz.gleam` owns the Model–View–Update lifecycle. The model keeps the current
+screen separate from its dialog, so opening the exit confirmation does not
+replace or recursively wrap the quiz screen. Its `QuizAttempt` type holds the
+state shared by the `Answering` and `Reviewing` screens, while the screen's
 variants ensure that only the reviewing phase can contain a selected answer.
 Question numbers and totals are derived from the quiz and its remaining
 questions instead of being stored as additional, potentially inconsistent
