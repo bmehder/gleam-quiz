@@ -4,8 +4,13 @@ import gleam/list
 
 // TYPES -----------------------------------------------------------------------
 
+pub type Correctness {
+  Correct
+  Incorrect
+}
+
 pub type Answer {
-  Answer(text: String, is_correct: Bool)
+  Answer(text: String, correctness: Correctness)
 }
 
 pub type Question {
@@ -32,8 +37,10 @@ pub fn question(
   explanation explanation: String,
 ) -> Question {
   let answers = [
-    Answer(text: correct, is_correct: True),
-    ..list.map(incorrect, fn(answer) { Answer(text: answer, is_correct: False) })
+    Answer(text: correct, correctness: Correct),
+    ..list.map(incorrect, fn(answer) {
+      Answer(text: answer, correctness: Incorrect)
+    })
   ]
 
   Question(prompt: prompt, answers: answers, explanation: explanation)

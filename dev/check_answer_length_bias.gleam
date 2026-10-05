@@ -4,7 +4,7 @@ import gleam/int
 import gleam/io
 import gleam/list
 import gleam/string
-import quiz/domain.{type Answer, type Question, type Quiz}
+import quiz/domain.{type Answer, type Question, type Quiz, Correct, Incorrect}
 import quizzes/catalog
 
 // TYPES -----------------------------------------------------------------------
@@ -73,7 +73,7 @@ fn inspect_quiz(quiz: Quiz) -> Bool {
 fn invalid_count(question: Question) -> Int {
   let correct_count =
     question.answers
-    |> list.filter(fn(answer) { answer.is_correct })
+    |> list.filter(is_correct)
     |> list.length
 
   case list.length(question.answers) == 4 && correct_count == 1 {
@@ -83,9 +83,9 @@ fn invalid_count(question: Question) -> Int {
 }
 
 fn longest_count(question: Question) -> Int {
-  let correct = list.filter(question.answers, fn(answer) { answer.is_correct })
+  let correct = list.filter(question.answers, is_correct)
   let incorrect =
-    list.filter(question.answers, fn(answer) { !answer.is_correct })
+    list.filter(question.answers, fn(answer) { !is_correct(answer) })
 
   case correct {
     [answer] -> bool_to_int(is_strictly_longest(answer, incorrect))
@@ -97,6 +97,13 @@ fn is_strictly_longest(correct: Answer, incorrect: List(Answer)) -> Bool {
   list.all(incorrect, fn(answer) {
     string.length(correct.text) > string.length(answer.text)
   })
+}
+
+fn is_correct(answer: Answer) -> Bool {
+  case answer.correctness {
+    Correct -> True
+    Incorrect -> False
+  }
 }
 
 fn bool_to_int(value: Bool) -> Int {

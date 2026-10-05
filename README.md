@@ -37,9 +37,11 @@ src/
 dev/
 ├── check_answer_length_bias.gleam    # Quiz-content quality check
 └── quiz_dev.gleam                    # Time-travel development entry point
+test/
+└── quiz_test.gleam                   # Domain and state-transition tests
 ```
 
-`quiz.gleam` owns the Model–View–Update lifecycle. Its `QuizProgress` type holds
+`quiz.gleam` owns the Model–View–Update lifecycle. Its `QuizAttempt` type holds
 the state shared by the `Answering` and `Reviewing` phases, while the model's
 variants ensure that only the reviewing phase can contain a selected answer.
 The domain module contains reusable quiz types and preparation functions, while
@@ -88,6 +90,12 @@ Compile the project:
 
 ```sh
 gleam check
+```
+
+Run the automated tests:
+
+```sh
+gleam test
 ```
 
 Check formatting:

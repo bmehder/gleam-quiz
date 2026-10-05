@@ -10,17 +10,17 @@ import lustre/element.{type Element}
 import lustre/element/html
 import lustre/element/svg
 import lustre/event
-import quiz/domain.{type Answer, type Question, type Quiz}
+import quiz/domain.{type Answer, type Question, type Quiz, Correct, Incorrect}
 import quizzes/catalog
 import support/dialog
 
 // MODEL AND MESSAGES ----------------------------------------------------------
 
-pub type QuizProgress {
-  QuizProgress(
+pub type QuizAttempt {
+  QuizAttempt(
     quiz: Quiz,
-    current: Question,
-    remaining: List(Question),
+    current_question: Question,
+    remaining_questions: List(Question),
     score: Int,
     answered_count: Int,
   )
@@ -28,10 +28,10 @@ pub type QuizProgress {
 
 pub type Model {
   ChoosingQuiz
-  Answering(QuizProgress)
-  Reviewing(progress: QuizProgress, selected: Answer)
+  Answering(attempt: QuizAttempt)
+  Reviewing(attempt: QuizAttempt, selected_answer: Answer)
   ConfirmingQuizExit(previous: Model)
-  Finished(quiz: Quiz, score: Int, total: Int)
+  Finished(quiz: Quiz, score: Int, question_count: Int)
 }
 
 pub type Msg {
@@ -53,9 +53,9 @@ pub fn initial_model() -> Model {
 
 fn start_quiz(quiz: Quiz) -> Model {
   case domain.shuffled_questions(quiz) {
-    [first, ..rest] -> Answering(QuizProgress(quiz, first, rest, 0, 0))
+    [first, ..rest] -> Answering(attempt: QuizAttempt(quiz, first, rest, 0, 0))
 
-    [] -> Finished(quiz: quiz, score: 0, total: 0)
+    [] -> Finished(quiz: quiz, score: 0, question_count: 0)
   }
 }
 
@@ -76,36 +76,36 @@ fn update_model(model: Model, msg: Msg) -> Model {
   case model, msg {
     ChoosingQuiz, UserStartedQuiz(quiz) -> start_quiz(quiz)
 
-    Answering(progress), UserSelectedAnswer(answer) -> {
-      let new_score = case answer.is_correct {
-        True -> progress.score + 1
-        False -> progress.score
+    Answering(attempt), UserSelectedAnswer(answer) -> {
+      let new_score = case answer.correctness {
+        Correct -> attempt.score + 1
+        Incorrect -> attempt.score
       }
 
       Reviewing(
-        progress: QuizProgress(
-          ..progress,
+        attempt: QuizAttempt(
+          ..attempt,
           score: new_score,
-          answered_count: progress.answered_count + 1,
+          answered_count: attempt.answered_count + 1,
         ),
-        selected: answer,
+        selected_answer: answer,
       )
     }
 
-    Reviewing(QuizProgress(quiz, _, [next, ..rest], score, answered_count), _),
+    Reviewing(QuizAttempt(quiz, _, [next, ..rest], score, answered_count), _),
       UserClickedNextQuestion
     ->
-      Answering(QuizProgress(
+      Answering(attempt: QuizAttempt(
         quiz: quiz,
-        current: next,
-        remaining: rest,
+        current_question: next,
+        remaining_questions: rest,
         score: score,
         answered_count: answered_count,
       ))
 
-    Reviewing(QuizProgress(quiz, _, [], score, answered_count), _),
+    Reviewing(QuizAttempt(quiz, _, [], score, answered_count), _),
       UserClickedNextQuestion
-    -> Finished(quiz: quiz, score: score, total: answered_count)
+    -> Finished(quiz: quiz, score: score, question_count: answered_count)
 
     Finished(quiz, _, _), UserClickedRestartQuiz -> start_quiz(quiz)
 
@@ -202,32 +202,33 @@ fn view_content(model: Model) -> Element(Msg) {
   case model {
     ChoosingQuiz -> view_quiz_chooser(catalog.all())
 
-    Answering(progress) ->
+    Answering(attempt) ->
       view_answering(
-        progress.current,
-        progress.remaining,
-        progress.answered_count,
+        attempt.current_question,
+        attempt.remaining_questions,
+        attempt.answered_count,
       )
 
-    Reviewing(progress, selected) ->
+    Reviewing(attempt, selected_answer) ->
       view_reviewing(
-        progress.current,
-        progress.remaining,
-        selected,
-        progress.answered_count,
+        attempt.current_question,
+        attempt.remaining_questions,
+        selected_answer,
+        attempt.answered_count,
       )
 
     ConfirmingQuizExit(previous) -> view_content(previous)
 
-    Finished(quiz, score, total) -> view_finished(quiz, score, total)
+    Finished(quiz, score, question_count) ->
+      view_finished(quiz, score, question_count)
   }
 }
 
 fn view_title(model: Model) -> String {
   case model {
     ChoosingQuiz -> "Quiz Library"
-    Answering(progress) -> progress.quiz.title <> " Quiz"
-    Reviewing(progress, _) -> progress.quiz.title <> " Quiz"
+    Answering(attempt) -> attempt.quiz.title <> " Quiz"
+    Reviewing(attempt, _) -> attempt.quiz.title <> " Quiz"
     ConfirmingQuizExit(previous) -> view_title(previous)
     Finished(quiz, _, _) -> quiz.title <> " Quiz"
   }
@@ -344,14 +345,14 @@ fn card_attributes() {
 
 fn view_answering(
   question: Question,
-  remaining: List(Question),
+  remaining_questions: List(Question),
   answered_count: Int,
 ) -> Element(Msg) {
   let question_number = answered_count + 1
-  let total = question_number + list.length(remaining)
+  let total_question_count = question_number + list.length(remaining_questions)
 
   html.section(card_attributes(), [
-    view_progress(question_number, total),
+    view_progress(question_number, total_question_count),
     html.h2(
       [
         attribute.class(
@@ -379,32 +380,32 @@ fn view_answering(
 
 fn view_reviewing(
   question: Question,
-  remaining: List(Question),
-  selected: Answer,
+  remaining_questions: List(Question),
+  selected_answer: Answer,
   answered_count: Int,
 ) -> Element(Msg) {
-  let total = answered_count + list.length(remaining)
-  let feedback = case selected.is_correct {
-    True -> "Correct!"
-    False -> "Not quite."
+  let total_question_count = answered_count + list.length(remaining_questions)
+  let feedback = case selected_answer.correctness {
+    Correct -> "Correct!"
+    Incorrect -> "Not quite."
   }
-  let next_label = case remaining {
+  let next_label = case remaining_questions {
     [] -> "See results"
     _ -> "Next question"
   }
 
-  let feedback_class = case selected.is_correct {
-    True ->
+  let feedback_class = case selected_answer.correctness {
+    Correct ->
       "mt-7 rounded-2xl border border-emerald-400/30 bg-emerald-400/10 p-5"
-    False -> "mt-7 rounded-2xl border border-rose-400/30 bg-rose-400/10 p-5"
+    Incorrect -> "mt-7 rounded-2xl border border-rose-400/30 bg-rose-400/10 p-5"
   }
-  let feedback_heading_class = case selected.is_correct {
-    True -> "text-lg font-semibold text-emerald-300"
-    False -> "text-lg font-semibold text-rose-300"
+  let feedback_heading_class = case selected_answer.correctness {
+    Correct -> "text-lg font-semibold text-emerald-300"
+    Incorrect -> "text-lg font-semibold text-rose-300"
   }
 
   html.section(card_attributes(), [
-    view_progress(answered_count, total),
+    view_progress(answered_count, total_question_count),
     html.h2(
       [
         attribute.class(
@@ -415,7 +416,7 @@ fn view_reviewing(
     ),
     html.div(
       [attribute.class("mt-8 grid gap-3")],
-      list.map(question.answers, view_reviewed_answer(_, selected)),
+      list.map(question.answers, view_reviewed_answer(_, selected_answer)),
     ),
     html.div([attribute.class(feedback_class)], [
       html.h3([attribute.class(feedback_heading_class)], [html.text(feedback)]),
@@ -437,17 +438,20 @@ fn view_reviewing(
   ])
 }
 
-fn view_reviewed_answer(answer: Answer, selected: Answer) -> Element(Msg) {
-  let #(label, class) = case answer.is_correct, answer == selected {
-    True, _ -> #(
+fn view_reviewed_answer(
+  answer: Answer,
+  selected_answer: Answer,
+) -> Element(Msg) {
+  let #(label, class) = case answer.correctness, answer == selected_answer {
+    Correct, _ -> #(
       "✓ " <> answer.text,
       "rounded-2xl border border-emerald-400/40 bg-emerald-400/10 px-5 py-4 leading-snug text-emerald-200",
     )
-    False, True -> #(
+    Incorrect, True -> #(
       "✗ " <> answer.text,
       "rounded-2xl border border-rose-400/40 bg-rose-400/10 px-5 py-4 leading-snug text-rose-200",
     )
-    False, False -> #(
+    Incorrect, False -> #(
       answer.text,
       "rounded-2xl border border-slate-800 bg-slate-800/30 px-5 py-4 leading-snug text-slate-500",
     )
@@ -456,7 +460,10 @@ fn view_reviewed_answer(answer: Answer, selected: Answer) -> Element(Msg) {
   html.p([attribute.class(class)], [html.text(label)])
 }
 
-fn view_progress(current: Int, total: Int) -> Element(Msg) {
+fn view_progress(
+  current_question_number: Int,
+  total_question_count: Int,
+) -> Element(Msg) {
   html.div([attribute.class("flex items-center justify-between gap-4")], [
     html.button(
       [
@@ -476,16 +483,16 @@ fn view_progress(current: Int, total: Int) -> Element(Msg) {
       [
         html.text(
           "Question "
-          <> int.to_string(current)
+          <> int.to_string(current_question_number)
           <> " of "
-          <> int.to_string(total),
+          <> int.to_string(total_question_count),
         ),
       ],
     ),
   ])
 }
 
-fn view_finished(quiz: Quiz, score: Int, total: Int) -> Element(Msg) {
+fn view_finished(quiz: Quiz, score: Int, question_count: Int) -> Element(Msg) {
   html.section(card_attributes(), [
     html.div(
       [
@@ -499,7 +506,7 @@ fn view_finished(quiz: Quiz, score: Int, total: Int) -> Element(Msg) {
       html.text("Quiz complete"),
     ]),
     html.p([attribute.class("mt-4 text-center text-5xl font-bold text-white")], [
-      html.text(int.to_string(score) <> " / " <> int.to_string(total)),
+      html.text(int.to_string(score) <> " / " <> int.to_string(question_count)),
     ]),
     html.p([attribute.class("mt-3 text-center text-slate-400")], [
       html.text("You’ve reached the end of the " <> quiz.title <> " quiz."),
