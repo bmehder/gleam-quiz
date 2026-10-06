@@ -42,7 +42,7 @@ test/
 ```
 
 `quiz.gleam` owns the Model–View–Update lifecycle. Its `QuizAttempt` type holds
-the state shared by the `Answering` and `Reviewing` phases, while the model's
+the state shared by the `AnsweringQuestion` and `ReviewingQuestion` phases, while the model's
 variants ensure that only the reviewing phase can contain a selected answer.
 The browser owns the native exit dialog's visibility as transient UI state, so
 opening and dismissing it remain effects rather than becoming time-travelled

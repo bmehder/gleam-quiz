@@ -50,55 +50,55 @@ pub fn shuffling_preserves_answers_and_correctness_test() {
 
 pub fn selecting_a_correct_answer_increments_the_score_test() {
   let correct = Answer("Correct", Correct)
-  let attempt = sample_attempt(score: 2)
+  let quiz_attempt = sample_quiz_attempt(score: 2)
   let #(model, _) =
     quiz.update(
-      quiz.Answering(attempt: attempt),
+      quiz.AnsweringQuestion(quiz_attempt: quiz_attempt),
       quiz.UserSelectedAnswer(correct),
     )
 
   model
-  |> should.equal(quiz.Reviewing(
-    attempt: quiz.QuizAttempt(..attempt, score: 3),
+  |> should.equal(quiz.ReviewingQuestion(
+    quiz_attempt: quiz.QuizAttempt(..quiz_attempt, score: 3),
     selected_answer: correct,
   ))
 }
 
 pub fn selecting_an_incorrect_answer_preserves_the_score_test() {
   let incorrect = Answer("Incorrect", Incorrect)
-  let attempt = sample_attempt(score: 2)
+  let quiz_attempt = sample_quiz_attempt(score: 2)
   let #(model, _) =
     quiz.update(
-      quiz.Answering(attempt: attempt),
+      quiz.AnsweringQuestion(quiz_attempt: quiz_attempt),
       quiz.UserSelectedAnswer(incorrect),
     )
 
   model
-  |> should.equal(quiz.Reviewing(
-    attempt: quiz.QuizAttempt(..attempt, score: 2),
+  |> should.equal(quiz.ReviewingQuestion(
+    quiz_attempt: quiz.QuizAttempt(..quiz_attempt, score: 2),
     selected_answer: incorrect,
   ))
 }
 
 pub fn moving_to_the_next_question_preserves_the_attempt_test() {
   let next_question = sample_question()
-  let attempt =
-    quiz.QuizAttempt(..sample_attempt(score: 2), remaining_questions: [
+  let quiz_attempt =
+    quiz.QuizAttempt(..sample_quiz_attempt(score: 2), remaining_questions: [
       next_question,
     ])
   let #(model, _) =
     quiz.update(
-      quiz.Reviewing(
-        attempt: attempt,
+      quiz.ReviewingQuestion(
+        quiz_attempt: quiz_attempt,
         selected_answer: Answer("Correct", Correct),
       ),
       quiz.UserClickedNextQuestion,
     )
 
   model
-  |> should.equal(quiz.Answering(
-    attempt: quiz.QuizAttempt(
-      ..attempt,
+  |> should.equal(quiz.AnsweringQuestion(
+    quiz_attempt: quiz.QuizAttempt(
+      ..quiz_attempt,
       current_question: next_question,
       remaining_questions: [],
     ),
@@ -106,22 +106,26 @@ pub fn moving_to_the_next_question_preserves_the_attempt_test() {
 }
 
 pub fn completing_the_final_question_keeps_only_quiz_and_score_test() {
-  let attempt = sample_attempt(score: 2)
+  let quiz_attempt = sample_quiz_attempt(score: 2)
   let #(model, _) =
     quiz.update(
-      quiz.Reviewing(
-        attempt: attempt,
+      quiz.ReviewingQuestion(
+        quiz_attempt: quiz_attempt,
         selected_answer: Answer("Correct", Correct),
       ),
       quiz.UserClickedNextQuestion,
     )
 
   model
-  |> should.equal(quiz.Finished(quiz: attempt.quiz, score: attempt.score))
+  |> should.equal(quiz.FinishedQuiz(
+    quiz: quiz_attempt.quiz,
+    score: quiz_attempt.score,
+  ))
 }
 
 pub fn opening_exit_confirmation_does_not_change_the_model_test() {
-  let model = quiz.Answering(attempt: sample_attempt(score: 2))
+  let model =
+    quiz.AnsweringQuestion(quiz_attempt: sample_quiz_attempt(score: 2))
   let #(next_model, _) = quiz.update(model, quiz.UserClickedChooseQuiz)
 
   next_model
@@ -129,7 +133,8 @@ pub fn opening_exit_confirmation_does_not_change_the_model_test() {
 }
 
 pub fn confirming_quiz_exit_returns_to_the_catalogue_test() {
-  let model = quiz.Answering(attempt: sample_attempt(score: 2))
+  let model =
+    quiz.AnsweringQuestion(quiz_attempt: sample_quiz_attempt(score: 2))
   let #(model, _) = quiz.update(model, quiz.UserConfirmedQuizExit)
 
   model
@@ -138,7 +143,7 @@ pub fn confirming_quiz_exit_returns_to_the_catalogue_test() {
 
 // HELPERS ---------------------------------------------------------------------
 
-fn sample_attempt(score score: Int) -> quiz.QuizAttempt {
+fn sample_quiz_attempt(score score: Int) -> quiz.QuizAttempt {
   quiz.QuizAttempt(
     quiz: Quiz("test", "Test", "A test quiz", [sample_question()]),
     current_question: sample_question(),
